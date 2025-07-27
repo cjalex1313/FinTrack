@@ -1,23 +1,97 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { jwtDecode } from 'jwt-decode'
 import HomeView from '../views/HomeView.vue'
+import BaseLayout from '@/layouts/BaseLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
+import LoginView from '@/views/auth/LoginView.vue'
+
+const isGuid = (guid: string): boolean => {
+  // Return false for non-string or empty inputs
+  if (!guid || typeof guid !== 'string') {
+    return false
+  }
+
+  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+  return guidRegex.test(guid)
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'BaseLayout',
+      meta: { requireAuth: true },
+      component: BaseLayout,
+      children: [
+        {
+          path: '/',
+          name: 'Home',
+          component: HomeView,
+        },
+      ],
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/auth',
+      name: 'AuthLayout',
+      component: AuthLayout,
+      children: [
+        {
+          path: '',
+          name: 'Login',
+          component: LoginView,
+        },
+        {
+          path: 'register',
+          name: 'Register',
+          component: () => import('@/views/auth/RegisterView.vue'),
+        },
+        {
+          path: 'confirm-email',
+          name: 'ConfirmEmail',
+          component: () => import('@/views/auth/ConfirmEmailView.vue'),
+        },
+      ],
+    },
+    {
+      path: '/admin',
+      name: 'AdminLayout',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      children: [
+        {
+          path: '',
+          name: 'AdminDashboard',
+          component: () => import('@/views/admin/AdminView.vue'),
+        },
+      ],
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const jwt = localStorage.getItem('jwt')
+  if (to.meta.requireAuth && !jwt) {
+    next({ name: 'Login' })
+    return
+  }
+  if (!to.meta.requiresAuth && jwt && to.path.startsWith('/auth') && to.name != 'ConfirmEmail') {
+    next({ name: 'Home' })
+    return
+  }
+  if (to.meta.requireAdmin) {
+    if (!jwt) {
+      next({ name: 'Login' })
+      return
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const decoded: any = jwtDecode(jwt)
+    if (!decoded?.roles?.includes('Admin')) {
+      next({ name: 'Login' })
+      return
+    }
+  }
+  next()
 })
 
 export default router
