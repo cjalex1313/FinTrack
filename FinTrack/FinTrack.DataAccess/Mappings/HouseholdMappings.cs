@@ -1,11 +1,10 @@
 using FinTrack.Shared.Entities;
 using FinTrack.Shared.Entities.Auth;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FinTrack.DataAccess.Mappings;
 
-public static class HouseholdMappings
+internal static class HouseholdMappings
 {
     public static void Map(this EntityTypeBuilder<Household> entity)
     {

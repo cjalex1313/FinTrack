@@ -13,5 +13,8 @@ public static class BusinessLogicModuleExtension
         services.AddDataAccess(configuration);
         services.AddEmailModule(configuration);
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IHouseholdService, HouseholdService>();
+        services.AddScoped<IIncomeService, IncomeService>();
+        services.AddScoped<ISetupService, SetupService>();
     }
 }

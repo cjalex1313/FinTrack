@@ -11,6 +11,8 @@ namespace FinTrack.DataAccess;
 public class FinDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
     public DbSet<Household> Households { get; set; }
+    public DbSet<OneTimeIncome> OneTimeIncomes { get; set; }
+    public DbSet<RecurringIncome> RecurringIncomes { get; set; }
     
     public FinDbContext(DbContextOptions<FinDbContext> options) : base(options)
     {
@@ -21,5 +23,6 @@ public class FinDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     {
         base.OnModelCreating(builder);
         builder.Entity<Household>(e => e.Map());
+        builder.Entity<OneTimeIncome>(e => e.Map());
     }
 }
