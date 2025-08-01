@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FinTrack.DataAccess.Migrations
 {
     [DbContext(typeof(FinDbContext))]
-    [Migration("20250731223048_AddHouseholdsAndIncomes")]
-    partial class AddHouseholdsAndIncomes
+    [Migration("20250801204436_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -93,6 +93,34 @@ namespace FinTrack.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("FinTrack.Shared.Entities.ExpenseBucket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("MonthlyAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.ToTable("ExpenseBuckets");
+                });
+
             modelBuilder.Entity("FinTrack.Shared.Entities.Household", b =>
                 {
                     b.Property<Guid>("Id")
@@ -150,7 +178,8 @@ namespace FinTrack.DataAccess.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
@@ -299,6 +328,17 @@ namespace FinTrack.DataAccess.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("FinTrack.Shared.Entities.ExpenseBucket", b =>
+                {
+                    b.HasOne("FinTrack.Shared.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Household");
                 });
 
             modelBuilder.Entity("FinTrack.Shared.Entities.Household", b =>
