@@ -21,6 +21,7 @@
     "@vuelidate/validators": "^2.0.4",
     "@vueuse/core": "^13.5.0",
     "axios": "^1.10.0",
+    "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "pinia": "^3.0.3",
     "primeicons": "^7.0.0",

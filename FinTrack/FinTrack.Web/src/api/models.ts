@@ -1,4 +1,4 @@
-import type { RecurrenceType } from '@/models/RecurrenceType'
+import type { RecurrenceType } from '@/models/recurrenceType'
 import type { Role } from '@/models/role'
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
@@ -29,7 +29,7 @@ export interface SetupDTO {
   recurringIncomes: RecurringIncomeDTO[]
 }
 
-interface RecurringIncomeDTO {
+export interface RecurringIncomeDTO {
   id: string
   householdId: string
   amount: number
