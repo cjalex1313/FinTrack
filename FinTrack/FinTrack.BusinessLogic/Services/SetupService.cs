@@ -13,14 +13,14 @@ class SetupService : ISetupService
     private readonly FinDbContext _context;
     private readonly IHouseholdService _householdService;
     private readonly IIncomeService _incomeService;
-    private readonly IExpenseBucketService _expenseBucketService;
+    private readonly IExpenseService _expenseService;
 
-    public SetupService(FinDbContext context, IHouseholdService householdService, IIncomeService incomeService, IExpenseBucketService expenseBucketService)
+    public SetupService(FinDbContext context, IHouseholdService householdService, IIncomeService incomeService, IExpenseService expenseService)
     {
         _context = context;
         _householdService = householdService;
         _incomeService = incomeService;
-        _expenseBucketService = expenseBucketService;
+        _expenseService = expenseService;
     }
     
     public async Task SetupHousehold(SetupDTO dto, Guid userId)
@@ -40,7 +40,7 @@ class SetupService : ISetupService
                 expenseBucket.HouseholdId = household.Id;
             }
             await _incomeService.AddHouseholdRecurringIncomes(dto.RecurringIncomes);
-            await _expenseBucketService.AddExpenseBuckets(dto.ExpenseBuckets);
+            await _expenseService.AddExpenseBuckets(dto.ExpenseBuckets);
             await transaction.CommitAsync();
         }
         catch

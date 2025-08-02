@@ -4,16 +4,17 @@ using FinTrack.Shared.Entities;
 
 namespace FinTrack.BusinessLogic.Services;
 
-public interface IExpenseBucketService
+public interface IExpenseService
 {
     Task AddExpenseBuckets(IEnumerable<ExpenseBucketDTO> expenseBuckets);
+    Task<Expense> AddExpense(ExpenseDTO dto);
 }
 
-class ExpenseBucketService : IExpenseBucketService
+class ExpenseService : IExpenseService
 {
     private readonly FinDbContext _dbContext;
 
-    public ExpenseBucketService(FinDbContext dbContext)
+    public ExpenseService(FinDbContext dbContext)
     {
         _dbContext = dbContext;
     }
@@ -33,5 +34,20 @@ class ExpenseBucketService : IExpenseBucketService
             _dbContext.ExpenseBuckets.Add(expenseBucket);
         }
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<Expense> AddExpense(ExpenseDTO dto)
+    {
+        var expnse = new Expense()
+        {
+            HouseholdId = dto.HouseholdId,
+            Amount = dto.Amount,
+            Date = dto.Date,
+            Description = dto.Description,
+            ExpenseBucketId = dto.ExpenseBucketId
+        };
+        _dbContext.Expenses.Add(expnse);
+        await _dbContext.SaveChangesAsync();
+        return expnse;
     }
 }

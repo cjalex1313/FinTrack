@@ -16,6 +16,6 @@ public static class BusinessLogicModuleExtension
         services.AddScoped<IHouseholdService, HouseholdService>();
         services.AddScoped<IIncomeService, IncomeService>();
         services.AddScoped<ISetupService, SetupService>();
-        services.AddScoped<IExpenseBucketService, ExpenseBucketService>();
+        services.AddScoped<IExpenseService, ExpenseService>();
     }
 }

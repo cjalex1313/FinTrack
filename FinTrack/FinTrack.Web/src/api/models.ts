@@ -47,3 +47,12 @@ export interface ExpenseBucketDTO {
   monthlyAmount: number // decimal
   description: string | null // string?
 }
+
+export interface ExpenseDTO {
+  id: string
+  householdId: string
+  expenseBucketId: string | null
+  amount: number
+  date: string
+  description: string | null
+}
