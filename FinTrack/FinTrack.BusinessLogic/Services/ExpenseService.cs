@@ -1,6 +1,7 @@
 ﻿using FinTrack.DataAccess;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinTrack.BusinessLogic.Services;
 
@@ -8,6 +9,8 @@ public interface IExpenseService
 {
     Task AddExpenseBuckets(IEnumerable<ExpenseBucketDTO> expenseBuckets);
     Task<Expense> AddExpense(ExpenseDTO dto);
+    Task<IEnumerable<ExpenseBucket>> GetHouseholdBuckets(Guid householdId);
+    Task<IEnumerable<Expense>> GetExpensesForMonth(Guid householdId, DateOnly startOfMonth, DateOnly endOfMonth);
 }
 
 class ExpenseService : IExpenseService
@@ -49,5 +52,17 @@ class ExpenseService : IExpenseService
         _dbContext.Expenses.Add(expnse);
         await _dbContext.SaveChangesAsync();
         return expnse;
+    }
+
+    public async Task<IEnumerable<ExpenseBucket>> GetHouseholdBuckets(Guid householdId)
+    {
+        var buckets = await _dbContext.ExpenseBuckets.Where(b => b.HouseholdId == householdId).ToListAsync();
+        return buckets;       
+    }
+
+    public async Task<IEnumerable<Expense>> GetExpensesForMonth(Guid householdId, DateOnly startOfMonth, DateOnly endOfMonth)
+    {
+        var expenses = await _dbContext.Expenses.Where(e => e.HouseholdId == householdId && e.Date >= startOfMonth && e.Date <= endOfMonth).ToListAsync();
+        return expenses;       
     }
 }

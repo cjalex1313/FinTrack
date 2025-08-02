@@ -3,7 +3,7 @@ import { useToast } from 'primevue'
 
 export function useBaseApi() {
   const baseUrl = import.meta.env.VITE_API_BASE_URL
-  const timeout = 10000 // 10 seconds timeout
+  const timeout = 30000 // 30 seconds timeout
 
   const toast = useToast()
 

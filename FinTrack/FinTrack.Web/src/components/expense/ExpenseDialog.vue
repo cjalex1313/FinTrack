@@ -25,7 +25,7 @@
             :class="{ 'p-invalid': errors.amount }"
             placeholder="Enter amount"
           />
-          <small v-if="errors.amount" class="p-error">{{ errors.amount }}</small>
+          <small v-if="errors.amount" class="p-error text-red-500">{{ errors.amount }}</small>
         </div>
 
         <!-- Date Field -->
@@ -39,7 +39,7 @@
             :class="{ 'p-invalid': errors.date }"
             placeholder="Select date"
           />
-          <small v-if="errors.date" class="p-error">{{ errors.date }}</small>
+          <small v-if="errors.date" class="p-error text-red-500">{{ errors.date }}</small>
         </div>
 
         <!-- Expense Bucket Field -->
@@ -64,7 +64,7 @@
             id="description"
             v-model="formData.description"
             rows="3"
-            class="w-full"
+            class="w-full resize-none"
             placeholder="Enter description (optional)"
           />
         </div>
@@ -216,7 +216,6 @@ onMounted(() => {
 }
 
 .p-error {
-  color: var(--red-500);
   font-size: 0.875rem;
 }
 

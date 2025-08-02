@@ -1,5 +1,6 @@
+import { format } from 'date-fns'
 import { useBaseApi } from './baseApi'
-import type { ExpenseDTO } from './models'
+import type { ExpenseBucketDTO, ExpenseDTO } from './models'
 
 export function useExpenseApi() {
   const { baseApi } = useBaseApi()
@@ -9,5 +10,25 @@ export function useExpenseApi() {
     return response.data
   }
 
-  return { createExpense }
+  const getBucketsForHousehold = async (householdId: string) => {
+    const response = await baseApi.get<ExpenseBucketDTO[]>('api/expense/buckets', {
+      params: {
+        householdId,
+      },
+    })
+    return response.data
+  }
+
+  const getExpensesForMonth = async (householdId: string, dateInMonth: Date) => {
+    const formatedDate = format(dateInMonth, 'yyyy-MM-dd')
+    const response = await baseApi.get<ExpenseDTO[]>('api/expense', {
+      params: {
+        householdId,
+        dateInMonth: formatedDate,
+      },
+    })
+    return response.data
+  }
+
+  return { createExpense, getBucketsForHousehold, getExpensesForMonth }
 }

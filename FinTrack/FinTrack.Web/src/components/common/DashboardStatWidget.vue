@@ -4,7 +4,8 @@
       <span class="widget-title">{{ title }}</span>
     </template>
     <template #content>
-      <div class="widget-value" :class="sizeClass">{{ value }}</div>
+      <div v-if="value" class="widget-value" :class="sizeClass">{{ value }}</div>
+      <Skeleton v-else class="widget-value"></Skeleton>
       <div v-if="subtitle" class="widget-subtitle">{{ subtitle }}</div>
     </template>
   </Card>
@@ -12,11 +13,12 @@
 
 <script setup lang="ts">
 import Card from 'primevue/card'
+import { Skeleton } from 'primevue'
 import { computed } from 'vue'
 
 interface Props {
   title: string
-  value: string | number
+  value?: string | number | null
   subtitle?: string
   size?: 'sm' | 'md' | 'lg'
 }

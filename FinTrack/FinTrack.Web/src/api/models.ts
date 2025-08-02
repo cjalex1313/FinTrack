@@ -56,3 +56,16 @@ export interface ExpenseDTO {
   date: string
   description: string | null
 }
+
+export interface IncomesForMonthDTO {
+  oneTimeIncomes: OneTimeIncomeDTO[]
+  recurringIncomes: RecurringIncomeDTO[]
+}
+
+export interface OneTimeIncomeDTO {
+  id: string // Guid
+  householdId: string // Guid
+  amount: number // decimal
+  date: string // ISO date (from DateOnly)
+  description?: string | null
+}
