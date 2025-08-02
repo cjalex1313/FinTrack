@@ -27,6 +27,7 @@ export interface HouseholdDTO {
 export interface SetupDTO {
   household: HouseholdDTO
   recurringIncomes: RecurringIncomeDTO[]
+  expenseBuckets: ExpenseBucketDTO[]
 }
 
 export interface RecurringIncomeDTO {
@@ -37,4 +38,12 @@ export interface RecurringIncomeDTO {
   endDate?: string | null
   recurrence: RecurrenceType
   description?: string | null
+}
+
+export interface ExpenseBucketDTO {
+  id: string // Guid
+  householdId: string // Guid
+  name: string // required string
+  monthlyAmount: number // decimal
+  description: string | null // string?
 }

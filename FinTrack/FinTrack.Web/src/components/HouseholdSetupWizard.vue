@@ -144,7 +144,7 @@
                 <div class="space-y-3">
                   <div
                     v-for="(income, index) in recurringIncomes"
-                    :key="income.id"
+                    :key="index"
                     class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
                   >
                     <div class="flex-1">
@@ -201,16 +201,121 @@
         </StepPanel>
 
         <StepPanel value="3">
-          <div class="flex flex-col">
-            <div
-              class="border-2 border-dashed border-gray-300 rounded-lg flex-1 flex items-center justify-center"
-            >
-              <div class="text-center">
-                <i class="pi pi-tags text-4xl text-gray-400 mb-4"></i>
-                <p class="text-gray-500">Expense categories will go here</p>
-                <p class="text-sm text-gray-400 mt-2">
-                  Food, transport, utilities, entertainment, etc.
-                </p>
+          <div class="flex flex-col space-y-6">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="pi pi-tags mr-2"></i>
+                Expense Buckets
+              </h2>
+              <p class="text-gray-600 mb-6">
+                Add your expense buckets like Food, Transport, Utilities, Entertainment, etc.
+              </p>
+
+              <!-- Expense Bucket Form -->
+              <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <h3 class="text-lg font-medium text-gray-700 mb-4">
+                  {{ editingBucket ? 'Edit Expense Bucket' : 'Add New Expense Bucket' }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <FloatLabel variant="on">
+                      <InputText
+                        id="bucketName"
+                        v-model="currentBucket.name"
+                        class="w-full"
+                        placeholder="e.g., Food, Transport"
+                      />
+                      <label for="bucketName">Name</label>
+                    </FloatLabel>
+                  </div>
+                  <div>
+                    <FloatLabel variant="on">
+                      <InputNumber
+                        id="bucketAmount"
+                        v-model="currentBucket.monthlyAmount"
+                        class="w-full"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                        :min="0"
+                      />
+                      <label for="bucketAmount">Estimated Monthly Amount</label>
+                    </FloatLabel>
+                  </div>
+                  <div class="md:col-span-2">
+                    <FloatLabel variant="on">
+                      <InputText
+                        id="bucketDescription"
+                        v-model="currentBucket.description"
+                        class="w-full"
+                        placeholder="Optional description"
+                      />
+                      <label for="bucketDescription">Description (Optional)</label>
+                    </FloatLabel>
+                  </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                  <Button
+                    v-if="editingBucket"
+                    label="Cancel"
+                    severity="secondary"
+                    @click="cancelBucketEdit"
+                  />
+                  <Button
+                    :label="editingBucket ? 'Update' : 'Add Bucket'"
+                    icon="pi pi-plus"
+                    @click="saveBucket"
+                    :disabled="!isBucketValid"
+                  />
+                </div>
+              </div>
+
+              <!-- Expense Buckets List -->
+              <div v-if="expenseBuckets.length > 0">
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Added Expense Buckets</h3>
+                <div class="space-y-3">
+                  <div
+                    v-for="(bucket, index) in expenseBuckets"
+                    :key="index"
+                    class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
+                  >
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-4">
+                        <div>
+                          <p class="font-medium text-gray-900">{{ bucket.name }}</p>
+                          <p class="text-sm text-gray-500">
+                            ${{ bucket.monthlyAmount.toLocaleString() }}
+                          </p>
+                          <p v-if="bucket.description" class="text-xs text-gray-400">
+                            {{ bucket.description }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex space-x-2">
+                      <Button
+                        icon="pi pi-pencil"
+                        severity="secondary"
+                        size="small"
+                        @click="editBucket(index)"
+                        outlined
+                      />
+                      <Button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        size="small"
+                        @click="deleteBucket(index)"
+                        outlined
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-8">
+                <i class="pi pi-info-circle text-2xl text-gray-400 mb-2"></i>
+                <p class="text-gray-500">No expense buckets added yet</p>
+                <p class="text-sm text-gray-400">Add your first expense bucket above</p>
               </div>
             </div>
           </div>
@@ -240,7 +345,13 @@ import StepPanel from 'primevue/steppanel'
 import Button from 'primevue/button'
 import { format } from 'date-fns'
 import { FloatLabel, InputText, InputNumber, DatePicker, Select } from 'primevue'
-import { EMPTY_GUID, type HouseholdDTO, type SetupDTO, type RecurringIncomeDTO } from '@/api/models'
+import {
+  EMPTY_GUID,
+  type HouseholdDTO,
+  type SetupDTO,
+  type RecurringIncomeDTO,
+  type ExpenseBucketDTO,
+} from '@/api/models'
 import { RecurrenceType } from '@/models/recurrenceType'
 import { useHouseholdApi } from '@/api/householdApi'
 
@@ -260,6 +371,19 @@ const household = ref<HouseholdDTO>({
 const recurringIncomes = ref<RecurringIncomeDTO[]>([])
 const editingIncome = ref(false)
 const editingIndex = ref(-1)
+
+// Expense Buckets Management
+const expenseBuckets = ref<ExpenseBucketDTO[]>([])
+const editingBucket = ref(false)
+const editingBucketIndex = ref(-1)
+
+const currentBucket = ref<ExpenseBucketDTO>({
+  id: EMPTY_GUID,
+  householdId: EMPTY_GUID,
+  name: '',
+  monthlyAmount: 0,
+  description: '',
+})
 
 const currentIncome = ref({
   id: EMPTY_GUID,
@@ -289,6 +413,19 @@ const isIncomeValid = computed(() => {
   )
 })
 
+const isBucketValid = computed(() => {
+  const name = currentBucket.value.name?.trim()
+  const amountOk = currentBucket.value.monthlyAmount > 0
+  const unique =
+    name &&
+    !expenseBuckets.value.some(
+      (b, idx) =>
+        b.name.trim().toLowerCase() === name.toLowerCase() &&
+        (!editingBucket.value || idx !== editingBucketIndex.value),
+    )
+  return !!name && amountOk && !!unique
+})
+
 // Helper functions
 const getRecurrenceLabel = (recurrence: RecurrenceType): string => {
   const option = recurrenceOptions.find((opt) => opt.value === recurrence)
@@ -309,6 +446,16 @@ const resetCurrentIncome = () => {
     startDate: null,
     endDate: null,
     recurrence: RecurrenceType.Monthly,
+    description: '',
+  }
+}
+
+const resetCurrentBucket = () => {
+  currentBucket.value = {
+    id: EMPTY_GUID,
+    householdId: EMPTY_GUID,
+    name: '',
+    monthlyAmount: 0,
     description: '',
   }
 }
@@ -340,6 +487,29 @@ const saveIncome = () => {
   resetCurrentIncome()
 }
 
+// Bucket management
+const saveBucket = () => {
+  if (!isBucketValid.value) return
+
+  const toSave: ExpenseBucketDTO = {
+    id: editingBucket.value ? currentBucket.value.id : EMPTY_GUID,
+    householdId: household.value.id,
+    name: (currentBucket.value.name || '').trim(),
+    monthlyAmount: currentBucket.value.monthlyAmount,
+    description: currentBucket.value.description || '',
+  }
+
+  if (editingBucket.value) {
+    expenseBuckets.value[editingBucketIndex.value] = toSave
+    editingBucket.value = false
+    editingBucketIndex.value = -1
+  } else {
+    expenseBuckets.value.push(toSave)
+  }
+
+  resetCurrentBucket()
+}
+
 const editIncome = (index: number) => {
   const income = recurringIncomes.value[index]
   currentIncome.value = {
@@ -355,14 +525,37 @@ const editIncome = (index: number) => {
   editingIndex.value = index
 }
 
+const editBucket = (index: number) => {
+  const bucket = expenseBuckets.value[index]
+  currentBucket.value = {
+    id: bucket.id,
+    householdId: bucket.householdId,
+    name: bucket.name,
+    monthlyAmount: bucket.monthlyAmount,
+    description: bucket.description || '',
+  }
+  editingBucket.value = true
+  editingBucketIndex.value = index
+}
+
 const cancelEdit = () => {
   editingIncome.value = false
   editingIndex.value = -1
   resetCurrentIncome()
 }
 
+const cancelBucketEdit = () => {
+  editingBucket.value = false
+  editingBucketIndex.value = -1
+  resetCurrentBucket()
+}
+
 const deleteIncome = (index: number) => {
   recurringIncomes.value.splice(index, 1)
+}
+
+const deleteBucket = (index: number) => {
+  expenseBuckets.value.splice(index, 1)
 }
 
 // Navigation functions
@@ -386,6 +579,7 @@ const completeSetup = async () => {
   const setupDto: SetupDTO = {
     household: household.value,
     recurringIncomes: recurringIncomes.value,
+    expenseBuckets: expenseBuckets.value,
   }
   await houstholdApi.setupHousehold(setupDto)
 
