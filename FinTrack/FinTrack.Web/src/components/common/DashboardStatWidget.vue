@@ -4,7 +4,9 @@
       <span class="widget-title">{{ title }}</span>
     </template>
     <template #content>
-      <div v-if="value" class="widget-value" :class="sizeClass">{{ value }}</div>
+      <div v-if="value != null && value != undefined" class="widget-value" :class="sizeClass">
+        {{ formattedValue }}
+      </div>
       <Skeleton v-else class="widget-value"></Skeleton>
       <div v-if="subtitle" class="widget-subtitle">{{ subtitle }}</div>
     </template>
@@ -21,6 +23,7 @@ interface Props {
   value?: string | number | null
   subtitle?: string
   size?: 'sm' | 'md' | 'lg'
+  type?: 'percentage' | 'money'
 }
 
 const props = defineProps<Props>()
@@ -34,6 +37,28 @@ const sizeClass = computed(() => {
     default:
       return 'size-md'
   }
+})
+
+const formattedValue = computed(() => {
+  if (props.value == null || props.value == undefined) {
+    return null
+  }
+
+  if (typeof props.value == 'number') {
+    switch (props.type) {
+      case 'percentage':
+        return `%${props.value.toFixed(2)}`
+      case 'money':
+        const formatter = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        })
+        return formatter.format(props.value)
+      default:
+        return `${props.value}`
+    }
+  }
+  return props.value
 })
 </script>
 
