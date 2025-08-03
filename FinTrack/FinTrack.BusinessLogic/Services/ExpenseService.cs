@@ -1,6 +1,8 @@
-﻿using FinTrack.DataAccess;
+﻿using System.Net;
+using FinTrack.DataAccess;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.Entities;
+using FinTrack.Shared.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTrack.BusinessLogic.Services;
@@ -11,6 +13,9 @@ public interface IExpenseService
     Task<Expense> AddExpense(ExpenseDTO dto);
     Task<IEnumerable<ExpenseBucket>> GetHouseholdBuckets(Guid householdId);
     Task<IEnumerable<Expense>> GetExpensesForMonth(Guid householdId, DateOnly startOfMonth, DateOnly endOfMonth);
+    Task<ExpenseBucket> AddExpenseBucket(ExpenseBucketDTO newBucket);
+    Task<ExpenseBucket> UpdateExpenseBucket(ExpenseBucketDTO dto);
+    Task DeleteExpenseBucket(Guid id);
 }
 
 class ExpenseService : IExpenseService
@@ -64,5 +69,44 @@ class ExpenseService : IExpenseService
     {
         var expenses = await _dbContext.Expenses.Where(e => e.HouseholdId == householdId && e.Date >= startOfMonth && e.Date <= endOfMonth).ToListAsync();
         return expenses;       
+    }
+
+    public async Task<ExpenseBucket> AddExpenseBucket(ExpenseBucketDTO dto)
+    {
+        var newBucket = new ExpenseBucket()
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            MonthlyAmount = dto.MonthlyAmount,
+            HouseholdId = dto.HouseholdId
+        };
+        _dbContext.ExpenseBuckets.Add(newBucket);
+        await _dbContext.SaveChangesAsync();
+        return newBucket;       
+    }
+
+    public async Task<ExpenseBucket> UpdateExpenseBucket(ExpenseBucketDTO dto)
+    {
+        var expenseBucket = await _dbContext.ExpenseBuckets.FindAsync(dto.Id);
+        if (expenseBucket == null)
+        {
+            throw new BaseException("Expense bucket not found", (int)HttpStatusCode.NotFound);
+;        }
+        expenseBucket.Name = dto.Name;
+        expenseBucket.Description = dto.Description;
+        expenseBucket.MonthlyAmount = dto.MonthlyAmount;
+        await _dbContext.SaveChangesAsync();
+        return expenseBucket;       
+    }
+
+    public async Task DeleteExpenseBucket(Guid id)
+    {
+        var expenseBucket = await _dbContext.ExpenseBuckets.FindAsync(id);
+        if (expenseBucket == null)
+        {
+            throw new BaseException("Expense bucket not found", (int)HttpStatusCode.NotFound);
+        }
+        _dbContext.ExpenseBuckets.Remove(expenseBucket);
+        await _dbContext.SaveChangesAsync();       
     }
 }

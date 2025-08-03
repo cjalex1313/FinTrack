@@ -312,7 +312,7 @@ const loadIncomes = async () => {
   if (!household.value) {
     return
   }
-  const incomes = await incomeApi.getIncomesForMonth(new Date())
+  const incomes = await incomeApi.getIncomesForMonth(new Date(), household.value.id)
   oneTimeIncomes.value = incomes.oneTimeIncomes
   recurringIncomes.value = incomes.recurringIncomes
 }

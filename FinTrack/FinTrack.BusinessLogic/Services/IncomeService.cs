@@ -12,14 +12,14 @@ public interface IIncomeService
     Task AddHouseholdRecurringIncomes(IEnumerable<RecurringIncomeDTO> incomesDto);
     Task<IEnumerable<OneTimeIncome>> GetOneTimeIncomesForMonth(Guid householdId, DateOnly dateInMonth);
     Task<IEnumerable<RecurringIncome>> GetRecurringIncomesForMonth(Guid householdId, DateOnly dateInMonth);
-    Task<OneTimeIncome> AddOneTimeIncome(OneTimeIncomeDTO dto, Guid householdId);
-    Task<RecurringIncome> AddRecurringIncome(RecurringIncomeDTO dto, Guid houseHoldId);
+    Task<OneTimeIncome> AddOneTimeIncome(OneTimeIncomeDTO dto);
+    Task<RecurringIncome> AddRecurringIncome(RecurringIncomeDTO dto);
     Task<OneTimeIncome> UpdateOneTimeIncome(OneTimeIncomeDTO dto);
     Task<RecurringIncome> UpdateRecurringIncome(RecurringIncomeDTO dto);
     Task<OneTimeIncome> GetOneTimeIncome(Guid id);
-    Task DeleteOneTimeIncome(OneTimeIncome income);
+    Task DeleteOneTimeIncome(Guid incomeId);
     Task<RecurringIncome> GetRecurringIncome(Guid id);
-    Task DeleteRecurringIncome(RecurringIncome income);
+    Task DeleteRecurringIncome(Guid incomeId);
 }
 
 class IncomeService : IIncomeService
@@ -79,11 +79,11 @@ class IncomeService : IIncomeService
         return incomes;       
     }
 
-    public async Task<OneTimeIncome> AddOneTimeIncome(OneTimeIncomeDTO dto, Guid householdId)
+    public async Task<OneTimeIncome> AddOneTimeIncome(OneTimeIncomeDTO dto)
     {
         var income = new OneTimeIncome()
         {
-            HouseholdId = householdId,
+            HouseholdId = dto.HouseholdId,
             Amount = dto.Amount,
             Date = dto.Date,
             Description = dto.Description
@@ -93,11 +93,11 @@ class IncomeService : IIncomeService
         return income;       
     }
 
-    public async Task<RecurringIncome> AddRecurringIncome(RecurringIncomeDTO dto, Guid houseHoldId)
+    public async Task<RecurringIncome> AddRecurringIncome(RecurringIncomeDTO dto)
     {
         var income = new RecurringIncome()
         {
-            HouseholdId = houseHoldId,
+            HouseholdId = dto.HouseholdId,
             Amount = dto.Amount,
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
@@ -150,8 +150,13 @@ class IncomeService : IIncomeService
         return income;
     }
 
-    public async Task DeleteOneTimeIncome(OneTimeIncome income)
+    public async Task DeleteOneTimeIncome(Guid id)
     {
+        var income = await _context.OneTimeIncomes.FindAsync(id);
+        if (income == null)
+        {
+            throw new BaseException("One time income not found", (int)HttpStatusCode.NotFound);       
+        }
         _context.OneTimeIncomes.Remove(income);
         await _context.SaveChangesAsync();
     }
@@ -166,9 +171,14 @@ class IncomeService : IIncomeService
         return income;       
     }
 
-    public async Task DeleteRecurringIncome(RecurringIncome income)
+    public async Task DeleteRecurringIncome(Guid income)
     {
-        _context.RecurringIncomes.Remove(income);
+        var incomeToDelete = await _context.RecurringIncomes.FindAsync(income);
+        if (incomeToDelete == null)
+        {
+            throw new BaseException("Recurring income not found", (int)HttpStatusCode.NotFound);       
+        }
+        _context.RecurringIncomes.Remove(incomeToDelete);
         await _context.SaveChangesAsync();       
     }
 }

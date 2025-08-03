@@ -5,11 +5,12 @@ import type { IncomesForMonthDTO, OneTimeIncomeDTO, RecurringIncomeDTO } from '.
 export function useIncomeApi() {
   const { baseApi } = useBaseApi()
 
-  const getIncomesForMonth = async (dateInMonth: Date) => {
+  const getIncomesForMonth = async (dateInMonth: Date, householdId: string) => {
     const formatedDate = format(dateInMonth, 'yyyy-MM-dd')
     const response = await baseApi.get<IncomesForMonthDTO>('api/income/for-month', {
       params: {
         dateInMonth: formatedDate,
+        householdId,
       },
     })
     return response.data
