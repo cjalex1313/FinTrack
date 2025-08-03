@@ -1,5 +1,7 @@
 <template>
-  <div class="flex items-center gap-3 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+  <div
+    class="month-picker flex items-center gap-3 bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+  >
     <Button
       @click="previousMonth"
       icon="pi pi-chevron-left"
@@ -100,6 +102,8 @@ const emitChange = (date: Date) => {
 }
 </script>
 
-<style scoped>
-/* Custom styling for the date picker if needed */
+<style>
+.month-picker .p-datepicker input {
+  text-align: center;
+}
 </style>
