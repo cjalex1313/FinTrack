@@ -12,7 +12,8 @@ public static class IncomesMapper
             Id = income.Id,
             Amount = income.Amount,
             Date = income.Date,
-            Description = income.Description
+            Description = income.Description,
+            HouseholdId = income.HouseholdId
         };
     }
 

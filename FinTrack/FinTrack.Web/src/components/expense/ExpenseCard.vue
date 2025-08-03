@@ -49,7 +49,7 @@ const formatDate = (dateString: string) => {
   })
 }
 
-const getBucketName = (bucketId: string) => {
+const getBucketName = (bucketId: string | null) => {
   if (!props.expenseBuckets) return 'Unknown bucket'
   const bucket = props.expenseBuckets.find((b) => b.id === bucketId)
   return bucket ? bucket.name : 'Unknown bucket'

@@ -30,6 +30,11 @@ const router = createRouter({
           name: 'Home',
           component: HomeView,
         },
+        {
+          path: '/incomes',
+          name: 'Incomes',
+          component: () => import('@/views/IncomeView.vue'),
+        },
       ],
     },
     {
