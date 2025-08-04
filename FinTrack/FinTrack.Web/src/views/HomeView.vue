@@ -1,13 +1,16 @@
 <template>
   <main class="p-4">
     <!-- Loading state -->
-    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+
+    <div
+      v-if="householdStore.loading"
+      class="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+    >
       <ProgressSpinner />
       <p class="text-gray-500 m-0">Loading your households...</p>
     </div>
-
     <!-- Setup wizard -->
-    <div v-else-if="!household">
+    <div v-else-if="householdStore.currentHousehold == null">
       <HouseholdSetupWizard @completed="loadHouseholds" />
     </div>
 
@@ -21,7 +24,7 @@
         }"
       >
         <h1 class="m-0 text-slate-800 text-3xl font-bold tracking-[0.2px]">
-          {{ household.name }}
+          {{ householdStore.currentHousehold.name }}
         </h1>
         <Button class="whitespace-nowrap" @click="onAddExpenseClick">Add expense</Button>
       </header>
@@ -164,7 +167,7 @@
 
       <ExpenseDialog
         v-if="showExpenseDialog"
-        :household-id="household.id"
+        :household-id="householdStore.currentHousehold.id"
         :expense-buckets="expenseBuckets"
         @closed="showExpenseDialog = false"
         @save="saveExpense"
@@ -174,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useHouseholdApi } from '@/api/householdApi'
 import type {
   OneTimeIncomeDTO,
@@ -196,8 +199,8 @@ import OneTimeIncomeCard from '@/components/income/OneTimeIncomeCard.vue'
 import RecurringIncomeCard from '@/components/income/RecurringIncomeCard.vue'
 import ExpenseBucketCard from '@/components/expense/ExpenseBucketCard.vue'
 import ExpenseCard from '@/components/expense/ExpenseCard.vue'
+import { useHouseholdStore } from '@/stores/household'
 
-const household = ref<HouseholdDTO>()
 const expenseBuckets = ref<ExpenseBucketDTO[]>([])
 const currentMonthExpenses = ref<ExpenseDTO[] | null>(null)
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
@@ -209,10 +212,7 @@ const { getHouseholds } = useHouseholdApi()
 const expenseApi = useExpenseApi()
 const incomeApi = useIncomeApi()
 const { isMobile } = useDeviceType()
-
-onMounted(() => {
-  loadHouseholds()
-})
+const householdStore = useHouseholdStore()
 
 const monthlyBudget = computed(() => {
   if (!expenseBuckets.value) {
@@ -224,6 +224,10 @@ const monthlyBudget = computed(() => {
   const result = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
   return result
 })
+
+const loadHouseholds = () => {
+  householdStore.loadHouseholds()
+}
 
 const budgetUtilisiation = computed(() => {
   if (
@@ -290,18 +294,7 @@ const allIncomes = computed(() => {
   return incomes
 })
 
-const loadHouseholds = async () => {
-  try {
-    loading.value = true
-    const data = await getHouseholds()
-    if (data && data.length > 0) {
-      household.value = data[0]
-    }
-  } catch (error) {
-    console.error('Failed to load households:', error)
-  } finally {
-    loading.value = false
-  }
+const loadData = async () => {
   const loadBucketsPromise = loadBuckets()
   const loadExpensesPromise = loadExpenses()
   const loadIncomesPromise = loadIncomes()
@@ -309,27 +302,30 @@ const loadHouseholds = async () => {
 }
 
 const loadIncomes = async () => {
-  if (!household.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const incomes = await incomeApi.getIncomesForMonth(new Date(), household.value.id)
+  const incomes = await incomeApi.getIncomesForMonth(new Date(), householdStore.currentHousehold.id)
   oneTimeIncomes.value = incomes.oneTimeIncomes
   recurringIncomes.value = incomes.recurringIncomes
 }
 
 const loadBuckets = async () => {
-  if (!household.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const buckets = await expenseApi.getBucketsForHousehold(household.value.id)
+  const buckets = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
   expenseBuckets.value = buckets
 }
 
 const loadExpenses = async () => {
-  if (!household.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const expenses = await expenseApi.getExpensesForMonth(household.value.id, new Date())
+  const expenses = await expenseApi.getExpensesForMonth(
+    householdStore.currentHousehold.id,
+    new Date(),
+  )
   currentMonthExpenses.value = expenses
 }
 
@@ -355,6 +351,16 @@ const saveExpense = async (expense: ExpenseDTO) => {
     showExpenseDialog.value = false
   }
 }
+
+watch(
+  () => householdStore.currentHousehold,
+  (newHousehold) => {
+    if (newHousehold) {
+      loadData()
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
