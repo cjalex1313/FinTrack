@@ -563,7 +563,6 @@ const nextStep = () => {
   const currentStep = parseInt(activeStep.value)
   if (currentStep < 3) {
     activeStep.value = (currentStep + 1).toString()
-    console.log(`Moving to step ${activeStep.value}`)
   }
 }
 
@@ -571,7 +570,6 @@ const prevStep = () => {
   const currentStep = parseInt(activeStep.value)
   if (currentStep > 1) {
     activeStep.value = (currentStep - 1).toString()
-    console.log(`Moving to step ${activeStep.value}`)
   }
 }
 

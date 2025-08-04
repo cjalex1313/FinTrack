@@ -70,6 +70,7 @@
                 >Dashboard</RouterLink
               >
               <RouterLink
+                v-if="householdStore.currentHousehold"
                 to="/incomes"
                 class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
                 exactActiveClass="bg-gray-900 text-white"
@@ -124,6 +125,7 @@
           >Dashboard</RouterLink
         >
         <RouterLink
+          v-if="householdStore.currentHousehold"
           to="/incomes"
           class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"
           exactActiveClass="bg-gray-900 text-white"
@@ -142,6 +144,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import { useHouseholdStore } from '@/stores/household'
 import { Menu } from 'primevue'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -150,6 +153,7 @@ const menu: any = ref(null)
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const householdStore = useHouseholdStore()
 
 const menuItems = [
   {
