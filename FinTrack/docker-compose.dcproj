@@ -5,10 +5,10 @@
     <DockerTargetOS>Linux</DockerTargetOS>
     <DockerPublishLocally>False</DockerPublishLocally>
     <ProjectGuid>81dded9d-158b-e303-5f62-77a2896d2a5a</ProjectGuid>
-    <DockerComposeBaseFilePath>compose</DockerComposeBaseFilePath>
+    <DockerComposeBaseFilePath>compose-vs</DockerComposeBaseFilePath>
   </PropertyGroup>
   <ItemGroup>
     <None Include=".dockerignore" />
-    <None Include="compose.yml" />
+    <None Include="compose-vs.yml" />
   </ItemGroup>
 </Project>
