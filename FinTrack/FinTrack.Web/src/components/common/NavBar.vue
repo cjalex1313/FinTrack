@@ -76,6 +76,13 @@
                 exactActiveClass="bg-gray-900 text-white"
                 >Incomes</RouterLink
               >
+              <RouterLink
+                v-if="householdStore.currentHousehold"
+                to="/expense-buckets"
+                class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                exactActiveClass="bg-gray-900 text-white"
+                >Expense Buckets</RouterLink
+              >
               <!-- <RouterLink
                 to="/skills-library"
                 class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -130,6 +137,13 @@
           class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"
           exactActiveClass="bg-gray-900 text-white"
           >Incomes</RouterLink
+        >
+        <RouterLink
+          v-if="householdStore.currentHousehold"
+          to="/expense-buckets"
+          class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"
+          exactActiveClass="bg-gray-900 text-white"
+          >Expense Buckets</RouterLink
         >
         <!-- <RouterLink
           to="/skills-library"

@@ -19,6 +19,20 @@ export function useExpenseApi() {
     return response.data
   }
 
+  const createExpenseBucket = async (expenseBucket: ExpenseBucketDTO) => {
+    const response = await baseApi.post<ExpenseBucketDTO>('api/expense/bucket', expenseBucket)
+    return response.data
+  }
+
+  const updateExpenseBucket = async (expenseBucket: ExpenseBucketDTO) => {
+    const response = await baseApi.put<ExpenseBucketDTO>('api/expense/bucket', expenseBucket)
+    return response.data
+  }
+
+  const deleteExpenseBucket = async (expenseBucketId: string) => {
+    await baseApi.delete(`api/expense/bucket/${expenseBucketId}`)
+  }
+
   const getExpensesForMonth = async (householdId: string, dateInMonth: Date) => {
     const formatedDate = format(dateInMonth, 'yyyy-MM-dd')
     const response = await baseApi.get<ExpenseDTO[]>('api/expense', {
@@ -30,5 +44,12 @@ export function useExpenseApi() {
     return response.data
   }
 
-  return { createExpense, getBucketsForHousehold, getExpensesForMonth }
+  return {
+    createExpense,
+    getBucketsForHousehold,
+    getExpensesForMonth,
+    createExpenseBucket,
+    updateExpenseBucket,
+    deleteExpenseBucket,
+  }
 }

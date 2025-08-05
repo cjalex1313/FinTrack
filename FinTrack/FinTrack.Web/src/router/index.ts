@@ -35,6 +35,11 @@ const router = createRouter({
           name: 'Incomes',
           component: () => import('@/views/IncomeView.vue'),
         },
+        {
+          path: '/expense-buckets',
+          name: 'ExpenseBuckets',
+          component: () => import('@/views/ExpenseBucketView.vue'),
+        },
       ],
     },
     {

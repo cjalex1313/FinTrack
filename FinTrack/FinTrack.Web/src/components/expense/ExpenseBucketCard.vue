@@ -45,6 +45,26 @@
         >
           Expense Bucket
         </span>
+
+        <!-- Action Buttons -->
+        <div v-if="showActionButtons" class="flex gap-2 mt-3">
+          <Button
+            icon="pi pi-pencil"
+            size="small"
+            severity="secondary"
+            outlined
+            @click="$emit('edit', bucket)"
+            aria-label="Edit expense bucket"
+          />
+          <Button
+            icon="pi pi-trash"
+            size="small"
+            severity="danger"
+            outlined
+            @click="$emit('delete', bucket)"
+            aria-label="Delete expense bucket"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -52,13 +72,20 @@
 
 <script setup lang="ts">
 import type { ExpenseBucketDTO } from '@/api/models'
+import { Button } from 'primevue'
 
 interface Props {
   bucket: ExpenseBucketDTO
   utilizationPercentage?: number | null
+  showActionButtons?: boolean
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  edit: [bucket: ExpenseBucketDTO]
+  delete: [bucket: ExpenseBucketDTO]
+}>()
 
 // Helper function to get the appropriate color class for utilization percentage text
 const getUtilizationColorClass = () => {
