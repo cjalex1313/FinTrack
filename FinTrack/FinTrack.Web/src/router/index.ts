@@ -40,6 +40,11 @@ const router = createRouter({
           name: 'ExpenseBuckets',
           component: () => import('@/views/ExpenseBucketView.vue'),
         },
+        {
+          path: '/expenses',
+          name: 'Expenses',
+          component: () => import('@/views/ExpensesView.vue'),
+        },
       ],
     },
     {

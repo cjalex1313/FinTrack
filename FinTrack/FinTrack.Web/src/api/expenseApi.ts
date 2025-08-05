@@ -10,6 +10,15 @@ export function useExpenseApi() {
     return response.data
   }
 
+  const updateExpense = async (expense: ExpenseDTO) => {
+    const response = await baseApi.put<ExpenseDTO>('api/expense', expense)
+    return response.data
+  }
+
+  const deleteExpense = async (expenseId: string) => {
+    await baseApi.delete(`api/expense/${expenseId}`)
+  }
+
   const getBucketsForHousehold = async (householdId: string) => {
     const response = await baseApi.get<ExpenseBucketDTO[]>('api/expense/buckets', {
       params: {
@@ -51,5 +60,7 @@ export function useExpenseApi() {
     createExpenseBucket,
     updateExpenseBucket,
     deleteExpenseBucket,
+    updateExpense,
+    deleteExpense,
   }
 }
