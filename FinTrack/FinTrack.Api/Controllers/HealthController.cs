@@ -1,4 +1,5 @@
 ﻿using AcademyOS.Api.Controllers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinTrack.Api.Controllers;
@@ -8,8 +9,9 @@ namespace FinTrack.Api.Controllers;
 public class HealthController : BaseController
 {
     [HttpGet("ping")]
+    [AllowAnonymous]
     public IActionResult Ping()
     {
-        return Ok();
+        return Ok(DateTime.UtcNow);
     }
 }
