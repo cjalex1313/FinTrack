@@ -1,0 +1,44 @@
+﻿services:
+  fintrack.api:
+    image: fintrack.api
+    build:
+      context: .
+      dockerfile: FinTrack.Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: "Debug"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/yourapp.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: yourpassword
+      ASPNETCORE_URLS: https://+:8081;http://+:8080
+    volumes:
+      - ${APPDATA}/ASP.NET/Https:/https:ro
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  fintrack.web:
+    image: fintrack.web
+    build:
+      context: FinTrack.Web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./FinTrack.Web:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_BASE_URL=https://localhost:8081
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: fintrack
+      POSTGRES_USER: fintrackuser
+      POSTGRES_PASSWORD: fintrackpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
