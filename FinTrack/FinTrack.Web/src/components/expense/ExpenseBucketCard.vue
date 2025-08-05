@@ -17,6 +17,26 @@
           </svg>
           <span>Monthly Budget</span>
         </div>
+
+        <!-- Utilization Progress Bar - Only show if utilizationPercentage is provided -->
+        <div
+          v-if="utilizationPercentage !== undefined && utilizationPercentage !== null"
+          class="mt-3"
+        >
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-medium text-gray-600">Budget Used</span>
+            <span class="text-xs font-medium" :class="getUtilizationColorClass()">
+              {{ utilizationPercentage.toFixed(1) }}%
+            </span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div
+              class="h-2 rounded-full transition-all duration-300"
+              :class="getUtilizationBarColorClass()"
+              :style="{ width: `${Math.min(utilizationPercentage, 100)}%` }"
+            ></div>
+          </div>
+        </div>
       </div>
       <div class="text-right">
         <div class="text-lg font-bold text-red-600">${{ bucket.monthlyAmount.toFixed(2) }}</div>
@@ -35,7 +55,26 @@ import type { ExpenseBucketDTO } from '@/api/models'
 
 interface Props {
   bucket: ExpenseBucketDTO
+  utilizationPercentage?: number | null
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+// Helper function to get the appropriate color class for utilization percentage text
+const getUtilizationColorClass = () => {
+  const percentage = props.utilizationPercentage || 0
+  if (percentage >= 90) return 'text-red-600'
+  if (percentage >= 75) return 'text-orange-600'
+  if (percentage >= 50) return 'text-yellow-600'
+  return 'text-green-600'
+}
+
+// Helper function to get the appropriate color class for utilization progress bar
+const getUtilizationBarColorClass = () => {
+  const percentage = props.utilizationPercentage || 0
+  if (percentage >= 90) return 'bg-red-500'
+  if (percentage >= 75) return 'bg-orange-500'
+  if (percentage >= 50) return 'bg-yellow-500'
+  return 'bg-green-500'
+}
 </script>

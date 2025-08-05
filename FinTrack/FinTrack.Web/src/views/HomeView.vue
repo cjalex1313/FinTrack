@@ -90,9 +90,12 @@
             class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[600px] overflow-y-auto"
           >
             <h2 class="text-xl font-semibold text-slate-800 mb-4">Expense Buckets</h2>
-            <Skeleton v-if="expenseBuckets.length === 0 && loading" height="100px" width="100%" />
+            <Skeleton v-if="calculatedBuckets === null" height="100px" width="100%" />
             <div v-else>
-              <div v-if="expenseBuckets.length === 0" class="bg-gray-50 rounded-lg p-8 text-center">
+              <div
+                v-if="calculatedBuckets.length === 0"
+                class="bg-gray-50 rounded-lg p-8 text-center"
+              >
                 <div class="text-gray-400 mb-2">
                   <svg
                     class="w-12 h-12 mx-auto"
@@ -113,9 +116,10 @@
               </div>
               <div v-else>
                 <ExpenseBucketCard
-                  v-for="bucket in expenseBuckets"
+                  v-for="bucket in calculatedBuckets"
                   :key="bucket.id"
                   :bucket="bucket"
+                  :utilization-percentage="bucket.utilizationPercentage"
                 />
               </div>
             </div>
@@ -158,7 +162,7 @@
                 v-for="expense in currentMonthExpenses"
                 :key="expense.id"
                 :expense="expense"
-                :expense-buckets="expenseBuckets"
+                :expense-buckets="expenseBuckets!"
               />
             </div>
           </div>
@@ -168,7 +172,7 @@
       <ExpenseDialog
         v-if="showExpenseDialog"
         :household-id="householdStore.currentHousehold.id"
-        :expense-buckets="expenseBuckets"
+        :expense-buckets="expenseBuckets!"
         @closed="showExpenseDialog = false"
         @save="saveExpense"
       />
@@ -201,7 +205,7 @@ import ExpenseBucketCard from '@/components/expense/ExpenseBucketCard.vue'
 import ExpenseCard from '@/components/expense/ExpenseCard.vue'
 import { useHouseholdStore } from '@/stores/household'
 
-const expenseBuckets = ref<ExpenseBucketDTO[]>([])
+const expenseBuckets = ref<ExpenseBucketDTO[] | null>(null)
 const currentMonthExpenses = ref<ExpenseDTO[] | null>(null)
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
@@ -222,6 +226,42 @@ const monthlyBudget = computed(() => {
     return null
   }
   const result = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
+  return result
+})
+
+const calculatedBuckets = computed(() => {
+  if (expenseBuckets.value == null) {
+    return null
+  }
+  const result = expenseBuckets.value.map((bucket) => {
+    let utilizationPercentage: number | null = null
+    if (currentMonthExpenses.value != null) {
+      const expensesUsed = currentMonthExpenses.value
+        .filter((e) => e.expenseBucketId === bucket.id)
+        .reduce((a, b) => a + b.amount, 0)
+      const utilisation = (expensesUsed * 100) / bucket.monthlyAmount
+      utilizationPercentage = utilisation
+    }
+    return {
+      ...bucket,
+      utilizationPercentage,
+    }
+  })
+  if (currentMonthExpenses.value != null) {
+    const otherExpenses = currentMonthExpenses.value.filter((e) => e.expenseBucketId == null)
+    const otherExpensesAmount = otherExpenses.reduce((a, b) => a + b.amount, 0)
+    if (otherExpensesAmount > 0) {
+      result.push({
+        id: 'Other',
+        householdId: '',
+        name: 'Other',
+        monthlyAmount: otherExpensesAmount,
+        description: 'Unknown bucket',
+        utilizationPercentage: null,
+      })
+    }
+  }
+
   return result
 })
 
