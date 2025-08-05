@@ -96,7 +96,7 @@ const saving = ref(false)
 const formData = ref<{
   name: string
   monthlyAmount: number | null
-  description?: string | null
+  description: string | null
 }>({
   name: '',
   monthlyAmount: null,
