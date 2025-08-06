@@ -7,7 +7,6 @@ import { reactive } from 'vue'
 const jwtKey = 'jwt'
 
 export const useAuthStore = defineStore('auth', () => {
-  // should not use apis inside pinia, this is an exception
   const authApi = useAuthApi()
 
   const authData = reactive<{
@@ -20,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function setJwt(accessToken: string) {
     localStorage.setItem(jwtKey, accessToken)
-    await getProfile()
+    await getProfile();
   }
 
   async function getProfile() {
