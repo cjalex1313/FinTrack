@@ -16,6 +16,8 @@ export interface LoginResponse {
 export interface ProfileDTO {
   id: string
   email: string
+  firstName: string | null
+  lastName: string | null
   roles: [Role]
 }
 
@@ -68,4 +70,24 @@ export interface OneTimeIncomeDTO {
   amount: number // decimal
   date: string // ISO date (from DateOnly)
   description?: string | null
+}
+
+export interface ForgotPasswordDTO {
+  email: string
+}
+
+export interface ResetPasswordDTO {
+  userId: string
+  token: string
+  password: string
+}
+
+export interface ChangePasswordDTO {
+  oldPassword: string
+  newPassword: string
+}
+
+export interface UpdateProfileNamesDTO {
+  firstName: string | null
+  lastName: string | null
 }

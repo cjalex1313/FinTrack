@@ -22,6 +22,10 @@ public interface IAuthService
     Task<ProfileDTO>  GetProfile(Guid userId);
     Task RegisterUser(RegisterRequest registerRequest);
     Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token);
+    Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
+    Task ChangePassword(Guid userId, string oldPassword, string newPassword);
+    Task ForgotPassword(string email);
+    Task ResetPassword(Guid userId, string token, string password);
 }
 
 public class AuthService : IAuthService
@@ -124,6 +128,8 @@ public class AuthService : IAuthService
         {
             Id = user.Id,
             Email = user.Email!,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Roles = userRoles.ToList()
         };
         return result;
@@ -173,6 +179,70 @@ public class AuthService : IAuthService
         }
         var jwtToken = GetToken(authClaims);
         return jwtToken;
+    }
+
+    public async Task UpdateProfileNames(Guid userId, string? firstName, string? lastName)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while updating user profile");
+        }
+    }
+
+    public async Task ChangePassword(Guid userId, string oldPassword, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while changing password");
+        }
+    }
+
+    public async Task ForgotPassword(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            throw new BaseException("User not found", (int)HttpStatusCode.NotFound);;
+        }
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+        
+        _emailService.SendEmail(new Email.Models.MailData
+        {
+            Email = email,
+            Name = (user.FirstName != null || user.LastName != null) ? $"{user.FirstName} {user.LastName}".Trim() : email,
+            Subject = "Password reset",
+            Body = $"Forgot your password? We got you. Click <a href=\"{_apiConfig.ForgotPasswordUrl + "?userId=" + user.Id + "&resetToken=" + encodedToken}\">here</a> to reset your password"
+        }, MimeKit.Text.TextFormat.Html);
+    }
+
+    public async Task ResetPassword(Guid userId, string token, string password)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.ResetPasswordAsync(user, token, password);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while resetting password");
+        }
     }
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)
