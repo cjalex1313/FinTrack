@@ -67,6 +67,16 @@ const router = createRouter({
           name: 'ConfirmEmail',
           component: () => import('@/views/auth/ConfirmEmailView.vue'),
         },
+        {
+          path: 'forgot-password',
+          name: 'ForgotPassword',
+          component: () => import('@/views/auth/ForgotPasswordView.vue'),
+        },
+        {
+          path: 'set-forgot-password',
+          name: 'ResetPassword',
+          component: () => import('@/views/auth/ResetPasswordView.vue'),
+        },
       ],
     },
     {

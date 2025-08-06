@@ -29,5 +29,6 @@ public class FinDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Entity<RecurringIncome>(e => e.Map());
         builder.Entity<ExpenseBucket>(e => e.Map());
         builder.Entity<Expense>(e => e.Map());
+        builder.Entity<ApplicationUser>(e => e.Map());
     }
 }

@@ -60,5 +60,37 @@ public class AuthController : BaseController
         ProfileDTO result = await _authService.GetProfile(userId);
         return Ok(result);
     }
-    
+
+    [HttpPatch("profile-names")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfileNames([FromBody] UpdateProfileNamesRequest request)
+    {
+        var userId = GetUserId();
+        await _authService.UpdateProfileNames(userId, request.FirstName, request.LastName);
+        ProfileDTO result = await _authService.GetProfile(userId);
+        return Ok(result);
+    }
+
+    [HttpPatch("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var userId = GetUserId();
+        await _authService.ChangePassword(userId, request.OldPassword, request.NewPassword);
+        return Ok();
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        await _authService.ForgotPassword(request.Email);
+        return Ok();
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        await _authService.ResetPassword(request.UserId, request.Token, request.Password);
+        return Ok();
+    }
 }

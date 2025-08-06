@@ -69,3 +69,13 @@ export interface OneTimeIncomeDTO {
   date: string // ISO date (from DateOnly)
   description?: string | null
 }
+
+export interface ForgotPasswordDTO {
+  email: string
+}
+
+export interface ResetPasswordDTO {
+  userId: string
+  token: string
+  password: string
+}
