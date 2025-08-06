@@ -41,12 +41,14 @@ builder.Services.AddBusinessLogic(builder.Configuration);
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>().AddEntityFrameworkStores<FinDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication(options =>
+var authenticationBuilder = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+});
+
+authenticationBuilder.AddJwtBearer(options =>
 {
     options.SaveToken = false;
     options.RequireHttpsMetadata = false;
@@ -66,6 +68,14 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
 });
+if (apiConfig.Authentication.Google.Enabled) {
+
+    authenticationBuilder.AddGoogle(options =>
+    {
+        options.ClientId = apiConfig.Authentication.Google.ClientId;
+        options.ClientSecret = apiConfig.Authentication.Google.ClientSecret;
+    });
+}
 
 builder.Services.Configure<IdentityOptions>(options =>
 {

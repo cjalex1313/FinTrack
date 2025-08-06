@@ -16,21 +16,23 @@ namespace FinTrack.BusinessLogic.Services;
 
 public interface IAuthService
 {
+    Task<IdentityResult> AddLoginAsync(ApplicationUser user, UserLoginInfo info);
+    Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token);
     Task EnsureAdminExists();
     Task EnsureRolesExistInDb();
+    Task<ProfileDTO> GetProfile(Guid userId);
     Task<JwtSecurityToken> Login(string email, string password);
-    Task<ProfileDTO>  GetProfile(Guid userId);
-    Task RegisterUser(RegisterRequest registerRequest);
-    Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token);
+    Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest);
 }
 
 public class AuthService : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-    private readonly IEmailService _emailService;
     private readonly ApiConfig _apiConfig;
-    
+    private readonly IEmailService _emailService;
+    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IdentityOptions _identityOptions;
+
     public AuthService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService, ApiConfig apiConfig)
     {
         _userManager = userManager;
@@ -38,7 +40,48 @@ public class AuthService : IAuthService
         _emailService = emailService;
         _apiConfig = apiConfig;
     }
-    
+
+    public async Task<IdentityResult> AddLoginAsync(ApplicationUser user, UserLoginInfo info)
+    {
+        var identityResult = await _userManager.AddLoginAsync(user, info);
+        return identityResult;
+    }
+
+    public async Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (result == null || !result.Succeeded)
+        {
+            throw new BaseException()
+            {
+                StatusCode = (int)HttpStatusCode.BadRequest,
+                ErrorMessage = result != null ? String.Join(". ", result.Errors.Select(e => e.Description).ToList()) : "Error while confirming email via confirmation token"
+            };
+        }
+
+        var authClaims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Iss, _apiConfig.JWTConfig.ValidIssuer)
+        };
+        var userRoles = await _userManager.GetRolesAsync(user);
+        foreach (var role in userRoles)
+        {
+            authClaims.Add(new Claim(ClaimTypes.Role, role));
+        }
+        if (user.Email != null)
+        {
+            authClaims.Add(new Claim(ClaimTypes.Email, user.Email));
+        }
+        var jwtToken = GetToken(authClaims);
+        return jwtToken;
+    }
+
     public async Task EnsureAdminExists()
     {
         var adminEmail = _apiConfig.AdminConfig.Email;
@@ -81,6 +124,23 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<ProfileDTO> GetProfile(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new BaseException("Error while getting user profile");
+        }
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var result = new ProfileDTO()
+        {
+            Id = user.Id,
+            Email = user.Email!,
+            Roles = userRoles.ToList()
+        };
+        return result;
+    }
+
     public async Task<JwtSecurityToken> Login(string email, string password)
     {
         var user = await _userManager.FindByEmailAsync(email);
@@ -111,25 +171,7 @@ public class AuthService : IAuthService
         var token = GetToken(authClaims);
         return token;
     }
-
-    public async Task<ProfileDTO> GetProfile(Guid userId)
-    {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            throw new BaseException("Error while getting user profile");
-        }
-        var userRoles = await _userManager.GetRolesAsync(user);
-        var result = new ProfileDTO()
-        {
-            Id = user.Id,
-            Email = user.Email!,
-            Roles = userRoles.ToList()
-        };
-        return result;
-    }
-
-    public async Task RegisterUser(RegisterRequest registerRequest)
+    public async Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest)
     {
         var emailExists = (await _userManager.FindByEmailAsync(registerRequest.Email)) != null;
         if (emailExists)
@@ -138,57 +180,15 @@ public class AuthService : IAuthService
         }
         var identityUser = await AddUser(registerRequest.Email, registerRequest.Email, registerRequest.Password);
         await AddRoleToUser(identityUser, Roles.User);
+        return identityUser;
     }
-
-    public async Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token)
+    private async Task AddRoleToUser(ApplicationUser identityUser, string role)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
+        var roleResult = await _userManager.AddToRoleAsync(identityUser, role);
+        if (!roleResult.Succeeded)
         {
-            throw new UserIdNotFoundException(userId);
+            throw new UserCreationException();
         }
-        var result = await _userManager.ConfirmEmailAsync(user, token);
-        if (result == null || !result.Succeeded)
-        {
-            throw new BaseException()
-            {
-                StatusCode = (int)HttpStatusCode.BadRequest,
-                ErrorMessage = result != null ? String.Join(". ", result.Errors.Select(e => e.Description).ToList()) : "Error while confirming email via confirmation token"
-            };
-        }
-        
-        var authClaims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Iss, _apiConfig.JWTConfig.ValidIssuer)
-        };
-        var userRoles = await _userManager.GetRolesAsync(user);
-        foreach (var role in userRoles)
-        {
-            authClaims.Add(new Claim(ClaimTypes.Role, role));
-        }
-        if (user.Email != null)
-        {
-            authClaims.Add(new Claim(ClaimTypes.Email, user.Email));
-        }
-        var jwtToken = GetToken(authClaims);
-        return jwtToken;
-    }
-
-    private JwtSecurityToken GetToken(List<Claim> authClaims)
-    {
-        var jwtSecret = _apiConfig.JWTConfig.Secret;
-        if (jwtSecret == null)
-        {
-            throw new BaseException("JWT configuration invalid");
-        }
-        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
-        var token = new JwtSecurityToken(
-            expires: DateTime.Now.AddMonths(12),
-            claims: authClaims,
-            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-        );
-        return token;
     }
 
     private async Task<ApplicationUser> AddUser(string username, string email, string password)
@@ -205,9 +205,9 @@ public class AuthService : IAuthService
         {
             throw new UserCreationException();
         }
-        
+
         if (username == "admin") return identityUser;
-        
+
         var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
         var encodedToken = Uri.EscapeDataString(confirmationToken);
         _emailService.SendEmail(new Email.Models.MailData
@@ -220,13 +220,20 @@ public class AuthService : IAuthService
         }, MimeKit.Text.TextFormat.Html);
         return identityUser;
     }
-    
-    private async Task AddRoleToUser(ApplicationUser identityUser, string role)
+
+    private JwtSecurityToken GetToken(List<Claim> authClaims)
     {
-        var roleResult = await _userManager.AddToRoleAsync(identityUser, role);
-        if (!roleResult.Succeeded)
+        var jwtSecret = _apiConfig.JWTConfig.Secret;
+        if (jwtSecret == null)
         {
-            throw new UserCreationException();
+            throw new BaseException("JWT configuration invalid");
         }
+        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+        var token = new JwtSecurityToken(
+            expires: DateTime.Now.AddMonths(12),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+        );
+        return token;
     }
 }
