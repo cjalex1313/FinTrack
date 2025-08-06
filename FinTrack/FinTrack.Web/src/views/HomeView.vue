@@ -223,7 +223,7 @@ const monthlyBudget = computed(() => {
     return null
   }
   if (expenseBuckets.value.length == 0) {
-    return null
+    return 0
   }
   const result = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
   return result
@@ -270,12 +270,11 @@ const loadHouseholds = () => {
 }
 
 const budgetUtilisiation = computed(() => {
-  if (
-    !expenseBuckets.value ||
-    expenseBuckets.value.length == 0 ||
-    currentMonthExpenses.value == null
-  ) {
+  if (!expenseBuckets.value || currentMonthExpenses.value == null) {
     return null
+  }
+  if (expenseBuckets.value.length == 0) {
+    return '-'
   }
   const bucketsSum = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
   const expensesUsed = currentMonthExpenses.value.reduce((a, b) => a + b.amount, 0)
