@@ -3,7 +3,7 @@ import type { HouseholdDTO } from '@/api/models'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useHouseholdStore = defineStore('household', () => {
+export const useHouseholdStore = defineStore('hosuehold', () => {
   const households = ref<HouseholdDTO[] | null>(null)
   const currentHousehold = ref<HouseholdDTO | null>(null)
   const loading = ref<boolean>(false)
@@ -17,8 +17,15 @@ export const useHouseholdStore = defineStore('household', () => {
     }
   }
 
-  const setIsLoading = (newLoading: boolean) => {
-    loading.value = newLoading
+  const loadHouseholds = async () => {
+    try {
+      loading.value = true
+      const householdApi = useHouseholdApi()
+      const data = await householdApi.getHouseholds()
+      setHouseholds(data)
+    } finally {
+      loading.value = false
+    }
   }
 
   const setCurrentHousehold = (newCurrentHousehold: HouseholdDTO) => {
@@ -30,7 +37,7 @@ export const useHouseholdStore = defineStore('household', () => {
     currentHousehold,
     setHouseholds,
     setCurrentHousehold,
+    loadHouseholds,
     loading,
-    setIsLoading,
   }
 })

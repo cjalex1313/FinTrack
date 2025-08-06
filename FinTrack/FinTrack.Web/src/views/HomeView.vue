@@ -2,12 +2,15 @@
   <main class="p-4">
     <!-- Loading state -->
 
-    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      v-if="householdStore.loading"
+      class="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+    >
       <ProgressSpinner />
       <p class="text-gray-500 m-0">Loading your households...</p>
     </div>
     <!-- Setup wizard -->
-    <div v-else-if="currentHousehold == null">
+    <div v-else-if="householdStore.currentHousehold == null">
       <HouseholdSetupWizard @completed="loadHouseholds" />
     </div>
 
@@ -21,7 +24,7 @@
         }"
       >
         <h1 class="m-0 text-slate-800 text-3xl font-bold tracking-[0.2px]">
-          {{ currentHousehold.name }}
+          {{ householdStore.currentHousehold.name }}
         </h1>
         <Button class="whitespace-nowrap" @click="onAddExpenseClick">Add expense</Button>
       </header>
@@ -168,7 +171,7 @@
 
       <ExpenseDialog
         v-if="showExpenseDialog"
-        :household-id="currentHousehold.id"
+        :household-id="householdStore.currentHousehold.id"
         :expense-buckets="expenseBuckets!"
         @closed="showExpenseDialog = false"
         @save="saveExpense"
@@ -201,26 +204,26 @@ import RecurringIncomeCard from '@/components/income/RecurringIncomeCard.vue'
 import ExpenseBucketCard from '@/components/expense/ExpenseBucketCard.vue'
 import ExpenseCard from '@/components/expense/ExpenseCard.vue'
 import { useHouseholdStore } from '@/stores/household'
-import { storeToRefs } from 'pinia'
 
 const expenseBuckets = ref<ExpenseBucketDTO[] | null>(null)
 const currentMonthExpenses = ref<ExpenseDTO[] | null>(null)
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
+const loading = ref(true)
 const showExpenseDialog = ref(false)
+
 const { getHouseholds } = useHouseholdApi()
 const expenseApi = useExpenseApi()
 const incomeApi = useIncomeApi()
 const { isMobile } = useDeviceType()
 const householdStore = useHouseholdStore()
-const { currentHousehold, loading } = storeToRefs(householdStore)
 
 const monthlyBudget = computed(() => {
   if (!expenseBuckets.value) {
     return null
   }
   if (expenseBuckets.value.length == 0) {
-    return 0
+    return null
   }
   const result = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
   return result
@@ -262,22 +265,17 @@ const calculatedBuckets = computed(() => {
   return result
 })
 
-const loadHouseholds = async () => {
-  try {
-    householdStore.setIsLoading(true)
-    const data = await getHouseholds()
-    householdStore.setHouseholds(data)
-  } finally {
-    householdStore.setIsLoading(false)
-  }
+const loadHouseholds = () => {
+  householdStore.loadHouseholds()
 }
 
 const budgetUtilisiation = computed(() => {
-  if (!expenseBuckets.value || currentMonthExpenses.value == null) {
+  if (
+    !expenseBuckets.value ||
+    expenseBuckets.value.length == 0 ||
+    currentMonthExpenses.value == null
+  ) {
     return null
-  }
-  if (expenseBuckets.value.length == 0) {
-    return '-'
   }
   const bucketsSum = expenseBuckets.value.reduce((a, b) => a + b.monthlyAmount, 0)
   const expensesUsed = currentMonthExpenses.value.reduce((a, b) => a + b.amount, 0)
@@ -343,32 +341,31 @@ const loadData = async () => {
   await Promise.all([loadBucketsPromise, loadExpensesPromise, loadIncomesPromise])
 }
 
-onMounted(async () => {
-  await loadData()
-})
-
 const loadIncomes = async () => {
-  if (!currentHousehold.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const incomes = await incomeApi.getIncomesForMonth(new Date(), currentHousehold.value.id)
+  const incomes = await incomeApi.getIncomesForMonth(new Date(), householdStore.currentHousehold.id)
   oneTimeIncomes.value = incomes.oneTimeIncomes
   recurringIncomes.value = incomes.recurringIncomes
 }
 
 const loadBuckets = async () => {
-  if (!currentHousehold.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const buckets = await expenseApi.getBucketsForHousehold(currentHousehold.value.id)
+  const buckets = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
   expenseBuckets.value = buckets
 }
 
 const loadExpenses = async () => {
-  if (!currentHousehold.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
-  const expenses = await expenseApi.getExpensesForMonth(currentHousehold.value.id, new Date())
+  const expenses = await expenseApi.getExpensesForMonth(
+    householdStore.currentHousehold.id,
+    new Date(),
+  )
   currentMonthExpenses.value = expenses
 }
 
@@ -396,7 +393,7 @@ const saveExpense = async (expense: ExpenseDTO) => {
 }
 
 watch(
-  () => currentHousehold.value,
+  () => householdStore.currentHousehold,
   (newHousehold) => {
     if (newHousehold) {
       loadData()
