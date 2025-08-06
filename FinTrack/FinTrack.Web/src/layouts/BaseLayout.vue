@@ -7,10 +7,17 @@ import { useHouseholdApi } from '@/api/householdApi'
 
 const route = useRoute()
 const householdStore = useHouseholdStore()
+const householdApi = useHouseholdApi()
 const loading = ref<boolean>(false)
 
-onBeforeMount(async () => {
-  await householdStore.loadHouseholds()
+onMounted(async () => {
+  try {
+    householdStore.setIsLoading(true)
+    const data = await householdApi.getHouseholds()
+    householdStore.setHouseholds(data)
+  } finally {
+    householdStore.setIsLoading(false)
+  }
 })
 </script>
 
