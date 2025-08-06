@@ -367,7 +367,6 @@
               iconPos="right"
               severity="success"
               @click="completeSetup"
-              :disabled="isSetupCompleted"
               class="w-full sm:w-auto order-1 sm:order-2"
             />
           </div>
@@ -407,7 +406,6 @@ const emit = defineEmits<{
 
 const activeStep = ref('1')
 const stepListRef = ref<any>(null)
-const isSetupCompleted = ref(false)
 const household = ref<HouseholdDTO>({
   id: EMPTY_GUID,
   name: '',
@@ -671,10 +669,6 @@ const prevStep = () => {
 }
 
 const completeSetup = async () => {
-  if (isSetupCompleted.value) return
-
-  isSetupCompleted.value = true
-
   const setupDto: SetupDTO = {
     household: household.value,
     recurringIncomes: recurringIncomes.value,
