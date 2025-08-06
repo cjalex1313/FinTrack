@@ -128,6 +128,8 @@ public class AuthService : IAuthService
         {
             Id = user.Id,
             Email = user.Email!,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Roles = userRoles.ToList()
         };
         return result;

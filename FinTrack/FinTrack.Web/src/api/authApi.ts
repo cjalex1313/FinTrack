@@ -1,5 +1,12 @@
 import { useBaseApi } from './baseApi'
-import type { ForgotPasswordDTO, LoginResponse, ProfileDTO, ResetPasswordDTO } from './models'
+import type {
+  ChangePasswordDTO,
+  ForgotPasswordDTO,
+  LoginResponse,
+  ProfileDTO,
+  ResetPasswordDTO,
+  UpdateProfileNamesDTO,
+} from './models'
 
 export function useAuthApi() {
   const { baseApi } = useBaseApi()
@@ -42,5 +49,24 @@ export function useAuthApi() {
     await baseApi.post<void>('api/auth/reset-password', request)
   }
 
-  return { login, getProfile, register, confirmEmail, forgotPassword, resetPassword }
+  const changePassword = async (oldPassword: string, newPassword: string) => {
+    const request: ChangePasswordDTO = { oldPassword, newPassword }
+    await baseApi.patch<void>('api/auth/change-password', request)
+  }
+
+  const updateProfileNames = async (request: UpdateProfileNamesDTO) => {
+    const response = await baseApi.patch<ProfileDTO>('api/auth/profile-names', request)
+    return response.data
+  }
+
+  return {
+    login,
+    getProfile,
+    register,
+    confirmEmail,
+    forgotPassword,
+    resetPassword,
+    changePassword,
+    updateProfileNames,
+  }
 }

@@ -185,6 +185,17 @@ const householdStore = useHouseholdStore()
 
 const menuItems = [
   {
+    label: 'Profile',
+    command: () => {
+      router.push({
+        name: 'Profile',
+      })
+    },
+  },
+  {
+    separator: true,
+  },
+  {
     label: 'Sign out',
     command: async () => {
       await authStore.signOut()
