@@ -22,6 +22,7 @@ internal static class ExpenseMappings
         
         entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId);
         entity.HasOne(e => e.ExpenseBucket).WithMany().HasForeignKey(e => e.ExpenseBucketId).OnDelete(DeleteBehavior.SetNull);
+        entity.HasOne(e => e.RecurringExpense).WithMany().HasForeignKey(e => e.RecurringExpenseId).OnDelete(DeleteBehavior.SetNull);
 
         entity.HasIndex(e => new {e.HouseholdId, e.Date});
     }
@@ -34,5 +35,7 @@ internal static class ExpenseMappings
         
         entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId);
         entity.HasOne(e => e.ExpenseBucket).WithMany().HasForeignKey(e => e.ExpenseBucketId).OnDelete(DeleteBehavior.SetNull);
+        
+        entity.HasIndex(e => new {e.NextDate});
     }
 }

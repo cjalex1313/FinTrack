@@ -2,7 +2,7 @@ using System.Security.Claims;
 using FinTrack.Shared.Exceptions.Auth;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AcademyOS.Api.Controllers;
+namespace FinTrack.Api.Controllers;
 
 public abstract class BaseController : ControllerBase
 {

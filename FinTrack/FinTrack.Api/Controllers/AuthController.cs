@@ -5,7 +5,7 @@ using FinTrack.Shared.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AcademyOS.Api.Controllers;
+namespace FinTrack.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]

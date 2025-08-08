@@ -1,4 +1,4 @@
-﻿using AcademyOS.Api.Controllers;
+﻿using FinTrack.Api.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

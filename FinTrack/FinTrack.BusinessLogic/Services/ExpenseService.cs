@@ -18,6 +18,11 @@ public interface IExpenseService
     Task DeleteExpenseBucket(Guid id);
     Task<Expense> UpdateExpense(ExpenseDTO dto);
     Task DeleteExpense(Guid id);
+    Task<RecurringExpense> AddRecurringExpense(RecurringExpenseDTO dto);
+    Task<RecurringExpense> UpdateRecurringExpense(RecurringExpenseDTO dto);
+    Task<RecurringExpense> GetRecurringExpense(Guid id);
+    Task DeleteRecurringExpense(Guid id);
+    Task<List<RecurringExpense>> GetRecurringExpensesForHousehold(Guid householdId);
 }
 
 class ExpenseService : IExpenseService
@@ -136,5 +141,66 @@ class ExpenseService : IExpenseService
         }
         _dbContext.Expenses.Remove(expense);
         await _dbContext.SaveChangesAsync();       
+    }
+
+    public async Task<RecurringExpense> AddRecurringExpense(RecurringExpenseDTO dto)
+    {
+        var recurring = new RecurringExpense
+        {
+            HouseholdId = dto.HouseholdId,
+            Amount = dto.Amount,
+            NextDate = dto.NextDate,
+            Recurrence = dto.Recurrence,
+            Description = dto.Description,
+            ExpenseBucketId = dto.ExpenseBucketId
+        };
+
+        _dbContext.RecurringExpenses.Add(recurring);
+        await _dbContext.SaveChangesAsync();
+        return recurring;
+    }
+
+
+    public async Task<RecurringExpense> UpdateRecurringExpense(RecurringExpenseDTO dto)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(dto.Id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        recurring.Amount = dto.Amount;
+        recurring.NextDate = dto.NextDate;
+        recurring.Recurrence = dto.Recurrence;
+        recurring.Description = dto.Description;
+        recurring.ExpenseBucketId = dto.ExpenseBucketId;
+        await _dbContext.SaveChangesAsync();
+        return recurring;       
+    }
+
+    public async Task<RecurringExpense> GetRecurringExpense(Guid id)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        return recurring;       
+    }
+
+    public async Task DeleteRecurringExpense(Guid id)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        _dbContext.RecurringExpenses.Remove(recurring);
+        await _dbContext.SaveChangesAsync();       
+    }
+
+    public async Task<List<RecurringExpense>> GetRecurringExpensesForHousehold(Guid householdId)
+    {
+        var recurringExpenses = await _dbContext.RecurringExpenses.Where(r => r.HouseholdId == householdId).ToListAsync();
+        return recurringExpenses;       
     }
 }
