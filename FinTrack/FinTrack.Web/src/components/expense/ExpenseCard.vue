@@ -35,7 +35,7 @@ import type { ExpenseDTO, ExpenseBucketDTO } from '@/api/models'
 
 interface Props {
   expense: ExpenseDTO
-  expenseBuckets?: ExpenseBucketDTO[]
+  expenseBuckets?: ExpenseBucketDTO[] | null
 }
 
 const props = defineProps<Props>()

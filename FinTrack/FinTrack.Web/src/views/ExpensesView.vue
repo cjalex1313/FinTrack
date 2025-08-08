@@ -45,6 +45,7 @@
               v-for="expense in expenses"
               :key="expense.id"
               :expense="expense"
+              :expense-buckets="expenseBuckets"
               :show-date="true"
               :show-action-buttons="true"
               @edit="editExpense"
