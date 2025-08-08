@@ -8,7 +8,9 @@ public class Expense
     public required DateOnly Date { get; set; }
     public string? Description { get; set; }
     public Guid? ExpenseBucketId { get; set; }
-    
+    public Guid? RecurringExpenseId { get; set; }   
     public virtual Household? Household { get; set; }
+    
     public virtual ExpenseBucket? ExpenseBucket { get; set; }
+    public virtual RecurringExpense? RecurringExpense { get; set; }  
 }
