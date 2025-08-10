@@ -125,7 +125,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAuthApi } from '@/api/authApi'
-import type { ProfileDTO, UpdateProfileNamesDTO, ChangePasswordDTO } from '@/api/models'
+import type { UpdateProfileNamesDTO, ChangePasswordDTO } from '@/api/models'
 
 const authApi = useAuthApi()
 
@@ -167,7 +167,7 @@ onMounted(async () => {
       firstName: profile.firstName || '',
       lastName: profile.lastName || '',
     }
-  } catch (error) {
+  } catch {
     showMessage('Failed to load profile information', 'error')
   }
 })
@@ -178,7 +178,7 @@ const updateProfile = async () => {
   try {
     await authApi.updateProfileNames(profileForm.value)
     showMessage('Profile updated successfully!', 'success')
-  } catch (error) {
+  } catch {
     showMessage('Failed to update profile. Please try again.', 'error')
   } finally {
     isUpdatingProfile.value = false
@@ -206,7 +206,7 @@ const changePassword = async () => {
       newPassword: '',
       confirmPassword: '',
     }
-  } catch (error) {
+  } catch {
     showMessage(
       'Failed to change password. Please check your current password and try again.',
       'error',

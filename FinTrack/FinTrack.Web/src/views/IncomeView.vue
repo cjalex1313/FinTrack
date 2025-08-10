@@ -182,7 +182,6 @@ import OneTimeIncomeDialog from '@/components/income/OneTimeIncomeDialog.vue'
 import RecurringIncomeDialog from '@/components/income/RecurringIncomeDialog.vue'
 import MonthPicker from '@/components/common/MonthPicker.vue'
 import getMonthlyEquivalent from '@/helpers/getMonthlyEquivalent'
-import { useHouseholdApi } from '@/api/householdApi'
 import { useHouseholdStore } from '@/stores/household'
 
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
@@ -197,7 +196,6 @@ const householdStore = useHouseholdStore()
 
 const incomeApi = useIncomeApi()
 const confirm = useConfirm()
-const { getHouseholds } = useHouseholdApi()
 
 onMounted(() => {
   loadData()
@@ -205,7 +203,7 @@ onMounted(() => {
 
 watch(
   () => householdStore.currentHousehold,
-  (newHousehold) => {
+  () => {
     loadData()
   },
 )
@@ -351,7 +349,7 @@ const saveOneTimeIncome = async (income: OneTimeIncomeDTO) => {
       }
     } else {
       // Editing existing income
-      var updatedIncome = await incomeApi.updateOneTimeIncome(income)
+      const updatedIncome = await incomeApi.updateOneTimeIncome(income)
 
       // For now, just update local state
       if (oneTimeIncomes.value) {
@@ -381,7 +379,7 @@ const saveRecurringIncome = async (income: RecurringIncomeDTO) => {
       }
     } else {
       // Editing existing income
-      var updatedIncome = await incomeApi.updateRecurringIncome(income)
+      const updatedIncome = await incomeApi.updateRecurringIncome(income)
 
       // For now, just update local state
       if (recurringIncomes.value) {

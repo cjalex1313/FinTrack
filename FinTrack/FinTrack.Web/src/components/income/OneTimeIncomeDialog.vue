@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useDeviceType } from '@/composables/useDeviceType'
-import { Dialog, Button, InputNumber, DatePicker, InputText, Textarea } from 'primevue'
+import { Dialog, Button, InputNumber, DatePicker, Textarea } from 'primevue'
 import type { OneTimeIncomeDTO } from '@/api/models'
 import { EMPTY_GUID } from '@/api/models'
 import { format } from 'date-fns'

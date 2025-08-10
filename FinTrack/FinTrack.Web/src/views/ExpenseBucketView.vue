@@ -119,7 +119,7 @@ onMounted(() => {
 
 watch(
   () => householdStore.currentHousehold,
-  (newHousehold) => {
+  () => {
     loadData()
   },
 )

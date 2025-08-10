@@ -122,7 +122,7 @@ onMounted(() => {
 
 watch(
   () => householdStore.currentHousehold,
-  (newHousehold) => {
+  () => {
     loadData()
   },
 )
@@ -222,7 +222,7 @@ const saveExpense = async (expense: ExpenseDTO) => {
       }
     } else {
       // Editing existing expense
-      var updatedExpense = await expenseApi.updateExpense(expense)
+      const updatedExpense = await expenseApi.updateExpense(expense)
 
       // Update local state
       if (expenses.value) {

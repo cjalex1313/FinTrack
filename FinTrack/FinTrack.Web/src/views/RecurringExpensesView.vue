@@ -126,7 +126,7 @@ onMounted(() => {
 
 watch(
   () => householdStore.currentHousehold,
-  (newHousehold) => {
+  () => {
     loadData()
   },
 )
@@ -234,7 +234,7 @@ const saveRecurringExpense = async (recurringExpense: RecurringExpenseDTO) => {
       }
     } else {
       // Editing existing recurring expense
-      var updatedRecurringExpense =
+      const updatedRecurringExpense =
         await recurringExpenseApi.updateRecurringExpense(recurringExpense)
 
       // Update local state

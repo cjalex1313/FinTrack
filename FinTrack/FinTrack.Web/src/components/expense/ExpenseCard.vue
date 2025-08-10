@@ -35,7 +35,7 @@
         size="small"
         severity="secondary"
         outlined
-        @click="$emit('edit', expense)"
+        @click="emit('edit', expense)"
         aria-label="Edit expense"
       />
       <Button
@@ -43,7 +43,7 @@
         size="small"
         severity="danger"
         outlined
-        @click="$emit('delete', expense)"
+        @click="emit('delete', expense)"
         aria-label="Delete expense"
       />
     </div>
