@@ -46,6 +46,11 @@ const router = createRouter({
           component: () => import('@/views/ExpensesView.vue'),
         },
         {
+          path: '/recurring-expenses',
+          name: 'RecurringExpenses',
+          component: () => import('@/views/RecurringExpensesView.vue'),
+        },
+        {
           path: '/profile',
           name: 'Profile',
           component: () => import('@/views/ProfileView.vue'),

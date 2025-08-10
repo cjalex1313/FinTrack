@@ -40,19 +40,46 @@
         </span>
       </div>
     </div>
+
+    <!-- Action Buttons -->
+    <div v-if="showActionButtons" class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
+      <Button
+        icon="pi pi-pencil"
+        size="small"
+        severity="secondary"
+        outlined
+        @click="$emit('edit', expense)"
+        aria-label="Edit recurring expense"
+      />
+      <Button
+        icon="pi pi-trash"
+        size="small"
+        severity="danger"
+        outlined
+        @click="$emit('delete', expense)"
+        aria-label="Delete recurring expense"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { RecurringExpenseDTO, ExpenseBucketDTO } from '@/api/models'
 import { RecurrenceType } from '@/models/recurrenceType'
+import { Button } from 'primevue'
 
 interface Props {
   expense: RecurringExpenseDTO
   expenseBuckets?: ExpenseBucketDTO[]
+  showActionButtons?: boolean
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: 'edit', expense: RecurringExpenseDTO): void
+  (e: 'delete', expense: RecurringExpenseDTO): void
+}>()
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)

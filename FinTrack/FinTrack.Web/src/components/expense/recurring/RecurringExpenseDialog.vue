@@ -36,6 +36,7 @@
             v-model="formData.nextDate"
             date-format="mm/dd/yy"
             class="w-full"
+            :min-date="minDateValue"
             :class="{ 'p-invalid': errors.nextDate }"
             placeholder="Select next occurrence date"
           />
@@ -117,6 +118,8 @@ interface Props {
   expenseBuckets: ExpenseBucketDTO[]
   recurringExpense?: RecurringExpenseDTO
 }
+
+const minDateValue = new Date()
 
 const props = defineProps<Props>()
 
