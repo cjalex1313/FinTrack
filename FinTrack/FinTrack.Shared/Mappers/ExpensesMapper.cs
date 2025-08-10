@@ -37,7 +37,8 @@ public static class ExpensesMapper
             ExpenseBucketId = expense.ExpenseBucketId,
             Amount = expense.Amount,
             Recurrence = expense.Recurrence,
-            Description = expense.Description       
+            Description = expense.Description,
+            NextDate = expense.NextDate       
         };       
     }
 }
