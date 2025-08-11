@@ -56,7 +56,7 @@ import { Button } from 'primevue'
 
 interface Props {
   expense: ExpenseDTO
-  expenseBuckets?: ExpenseBucketDTO[]
+  expenseBuckets?: ExpenseBucketDTO[] | null
   showActionButtons?: boolean
 }
 
