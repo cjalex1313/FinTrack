@@ -26,6 +26,7 @@ public interface IAuthService
     Task ChangePassword(Guid userId, string oldPassword, string newPassword);
     Task ForgotPassword(string email);
     Task ResetPassword(Guid userId, string token, string password);
+    Task<ApplicationUser?> GetUserByEmail(string email);
 }
 
 public class AuthService : IAuthService
@@ -243,6 +244,11 @@ public class AuthService : IAuthService
         {
             throw new BaseException("Error while resetting password");
         }
+    }
+
+    public async Task<ApplicationUser?> GetUserByEmail(string email)
+    {
+        return await _userManager.FindByEmailAsync(email);
     }
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)

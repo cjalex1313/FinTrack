@@ -14,13 +14,15 @@ class SetupService : ISetupService
     private readonly IHouseholdService _householdService;
     private readonly IIncomeService _incomeService;
     private readonly IExpenseService _expenseService;
+    private readonly IAuthService _authService;
 
-    public SetupService(FinDbContext context, IHouseholdService householdService, IIncomeService incomeService, IExpenseService expenseService)
+    public SetupService(FinDbContext context, IHouseholdService householdService, IIncomeService incomeService, IExpenseService expenseService, IAuthService authService)
     {
         _context = context;
         _householdService = householdService;
         _incomeService = incomeService;
         _expenseService = expenseService;
+        _authService = authService;
     }
     
     public async Task SetupHousehold(SetupDTO dto, Guid userId)
@@ -34,13 +36,23 @@ class SetupService : ISetupService
             {
                 income.HouseholdId = household.Id;
             }
-
             foreach (var expenseBucket in dto.ExpenseBuckets)
             {
                 expenseBucket.HouseholdId = household.Id;
             }
             await _incomeService.AddHouseholdRecurringIncomes(dto.RecurringIncomes);
             await _expenseService.AddExpenseBuckets(dto.ExpenseBuckets);
+            
+            foreach (var invitation in dto.Invites)
+            {
+                invitation.HouseholdId = household.Id;
+                var user = await _authService.GetUserByEmail(invitation.Email);
+                if (user == null)
+                {
+                    
+                }
+            }
+            
             await transaction.CommitAsync();
         }
         catch
