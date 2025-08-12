@@ -49,8 +49,9 @@ class SetupService : ISetupService
                 var user = await _authService.GetUserByEmail(invitation.Email);
                 if (user == null)
                 {
-                    
+                    user = await _authService.InviteEmailToHousehold(invitation.Email, household.Name);
                 }
+                await _householdService.AddHouseholdInvitation(household.Id, user.Id);
             }
             
             await transaction.CommitAsync();

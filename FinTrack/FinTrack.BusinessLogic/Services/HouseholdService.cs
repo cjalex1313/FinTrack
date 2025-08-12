@@ -1,4 +1,5 @@
 ﻿using FinTrack.DataAccess;
+using FinTrack.Shared.Common;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.DTO.Setup;
 using FinTrack.Shared.Entities;
@@ -11,6 +12,7 @@ public interface IHouseholdService
 {
     Task<Household> CreateHousehold(HouseholdDTO dto, Guid userId);
     Task<List<Household>> GetUserHouseholds(Guid userId);
+    Task AddHouseholdInvitation(Guid householdId, Guid userId);
 }
 
 class HouseholdService : IHouseholdService
@@ -43,5 +45,18 @@ class HouseholdService : IHouseholdService
     {
         var households = await _context.Households.Where(h => h.OwnerId == userId).ToListAsync();
         return households;
+    }
+
+    public async Task AddHouseholdInvitation(Guid householdId, Guid userId)
+    {
+        var householdMember = new HouseholdMember()
+        {
+            HouseholdId = householdId,
+            UserId = userId,
+            Role = HouseholdMemberRole.Member,
+            Status = HouseholdMemberStatus.PendingResponse
+        };
+        _context.HouseholdMembers.Add(householdMember);
+        await _context.SaveChangesAsync();       
     }
 }

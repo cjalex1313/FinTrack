@@ -59,6 +59,10 @@ export function useAuthApi() {
     return response.data
   }
 
+  const setPassword = async (password: string) => {
+    await baseApi.patch<void>('api/auth/set-password', { password })
+  }
+
   return {
     login,
     getProfile,
@@ -68,5 +72,6 @@ export function useAuthApi() {
     resetPassword,
     changePassword,
     updateProfileNames,
+    setPassword,
   }
 }

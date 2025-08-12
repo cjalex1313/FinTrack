@@ -11,6 +11,7 @@ export interface WeatherForecast {
 
 export interface LoginResponse {
   accessToken: string
+  passwordSetNeeded: boolean
 }
 
 export interface ProfileDTO {
@@ -30,6 +31,7 @@ export interface SetupDTO {
   household: HouseholdDTO
   recurringIncomes: RecurringIncomeDTO[]
   expenseBuckets: ExpenseBucketDTO[]
+  invites: HouseholdInviteDTO[]
 }
 
 export interface RecurringIncomeDTO {
@@ -100,4 +102,9 @@ export interface RecurringExpenseDTO {
   recurrence: RecurrenceType
   description?: string | null
   expenseBucketId: string | null
+}
+
+export interface HouseholdInviteDTO {
+  householdId: string
+  email: string
 }

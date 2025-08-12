@@ -48,6 +48,7 @@ public class AuthController : BaseController
         LoginResult response = new LoginResult()
         {
             AccessToken = tokenString,
+            PasswordSetNeeded = true
         };
         return Ok(response);
     }
@@ -93,4 +94,14 @@ public class AuthController : BaseController
         await _authService.ResetPassword(request.UserId, request.Token, request.Password);
         return Ok();
     }
+
+    [HttpPatch("set-password")]
+    [Authorize]
+    public async Task<IActionResult> SetPassword([FromBody] SetPasswordDTO request)
+    {
+        var userId = GetUserId();
+        await _authService.SetUserPassword(userId, request.Password);
+        return Ok();
+    }
+    
 }
