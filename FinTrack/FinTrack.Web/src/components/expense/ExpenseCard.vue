@@ -27,18 +27,45 @@
         </span>
       </div>
     </div>
+
+    <!-- Action Buttons -->
+    <div v-if="showActionButtons" class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
+      <Button
+        icon="pi pi-pencil"
+        size="small"
+        severity="secondary"
+        outlined
+        @click="emit('edit', expense)"
+        aria-label="Edit expense"
+      />
+      <Button
+        icon="pi pi-trash"
+        size="small"
+        severity="danger"
+        outlined
+        @click="emit('delete', expense)"
+        aria-label="Delete expense"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { ExpenseDTO, ExpenseBucketDTO } from '@/api/models'
+import { Button } from 'primevue'
 
 interface Props {
   expense: ExpenseDTO
-  expenseBuckets?: ExpenseBucketDTO[]
+  expenseBuckets?: ExpenseBucketDTO[] | null
+  showActionButtons?: boolean
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: 'edit', expense: ExpenseDTO): void
+  (e: 'delete', expense: ExpenseDTO): void
+}>()
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)

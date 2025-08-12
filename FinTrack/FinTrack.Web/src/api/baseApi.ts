@@ -1,11 +1,11 @@
+import { useCustomToast } from '@/composables/useCustomToast'
 import axios from 'axios'
-import { useToast } from 'primevue'
 
 export function useBaseApi() {
   const baseUrl = import.meta.env.VITE_API_BASE_URL
   const timeout = 30000 // 30 seconds timeout
 
-  const toast = useToast()
+  const toast = useCustomToast()
 
   const baseApi = axios.create({
     baseURL: baseUrl,

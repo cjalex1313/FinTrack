@@ -17,15 +17,24 @@ namespace FinTrack.BusinessLogic.Services;
 public interface IAuthService
 {
     Task<IdentityResult> AddLoginAsync(ApplicationUser user, UserLoginInfo info);
+    Task ChangePassword(Guid userId, string oldPassword, string newPassword);
+
     Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token);
     Task EnsureAdminExists();
     Task EnsureRolesExistInDb();
+    Task ForgotPassword(string email);
+
     Task<ProfileDTO> GetProfile(Guid userId);
     Task<JwtSecurityToken> Login(string email, string password);
+    Task<JwtSecurityToken> Login(ApplicationUser user);
+
     Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey);
     Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
+    Task ResetPassword(Guid userId, string token, string password);
+
+    Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
+
     Task<bool> UserExists(string email);
-    Task<JwtSecurityToken> Login(ApplicationUser user);
 }
 
 public class AuthService : IAuthService
@@ -47,6 +56,20 @@ public class AuthService : IAuthService
     {
         var identityResult = await _userManager.AddLoginAsync(user, info);
         return identityResult;
+    }
+
+    public async Task ChangePassword(Guid userId, string oldPassword, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while changing password");
+        }
     }
 
     public async Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token)
@@ -108,6 +131,25 @@ public class AuthService : IAuthService
         {
             await _roleManager.CreateAsync(new IdentityRole<Guid>(Roles.User));
         }
+    }
+
+    public async Task ForgotPassword(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            throw new BaseException("User not found", (int)HttpStatusCode.NotFound); ;
+        }
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+
+        _emailService.SendEmail(new Email.Models.MailData
+        {
+            Email = email,
+            Name = (user.FirstName != null || user.LastName != null) ? $"{user.FirstName} {user.LastName}".Trim() : email,
+            Subject = "Password reset",
+            Body = $"Forgot your password? We got you. Click <a href=\"{_apiConfig.ForgotPasswordUrl + "?userId=" + user.Id + "&resetToken=" + encodedToken}\">here</a> to reset your password"
+        }, MimeKit.Text.TextFormat.Html);
     }
 
     public async Task<ProfileDTO> GetProfile(Guid userId)
@@ -186,11 +228,41 @@ public class AuthService : IAuthService
         return identityUser;
     }
 
+    public async Task ResetPassword(Guid userId, string token, string password)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.ResetPasswordAsync(user, token, password);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while resetting password");
+        }
+    }
+
+    public async Task UpdateProfileNames(Guid userId, string? firstName, string? lastName)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+
+        user.FirstName = firstName;
+        user.LastName = lastName;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while updating user profile");
+        }
+    }
+
     public async Task<bool> UserExists(string email)
     {
         return (await _userManager.FindByEmailAsync(email)) != null;
     }
-
     private async Task AddRoleToUser(ApplicationUser identityUser, string role)
     {
         var roleResult = await _userManager.AddToRoleAsync(identityUser, role);

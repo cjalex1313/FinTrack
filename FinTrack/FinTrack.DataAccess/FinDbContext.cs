@@ -15,6 +15,7 @@ public class FinDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     public DbSet<RecurringIncome> RecurringIncomes { get; set; }
     public DbSet<ExpenseBucket> ExpenseBuckets { get; set; }
     public DbSet<Expense> Expenses { get; set; }
+    public DbSet<RecurringExpense> RecurringExpenses { get; set; }
     
     public FinDbContext(DbContextOptions<FinDbContext> options) : base(options)
     {
@@ -29,5 +30,7 @@ public class FinDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
         builder.Entity<RecurringIncome>(e => e.Map());
         builder.Entity<ExpenseBucket>(e => e.Map());
         builder.Entity<Expense>(e => e.Map());
+        builder.Entity<ApplicationUser>(e => e.Map());
+        builder.Entity<RecurringExpense>(e => e.Map());
     }
 }

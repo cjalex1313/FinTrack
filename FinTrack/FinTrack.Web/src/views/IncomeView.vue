@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { EMPTY_GUID, type OneTimeIncomeDTO, type RecurringIncomeDTO } from '@/api/models'
 import { useIncomeApi } from '@/api/incomeApi'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -182,7 +182,7 @@ import OneTimeIncomeDialog from '@/components/income/OneTimeIncomeDialog.vue'
 import RecurringIncomeDialog from '@/components/income/RecurringIncomeDialog.vue'
 import MonthPicker from '@/components/common/MonthPicker.vue'
 import getMonthlyEquivalent from '@/helpers/getMonthlyEquivalent'
-import { useHouseholdApi } from '@/api/householdApi'
+import { useHouseholdStore } from '@/stores/household'
 
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
@@ -192,15 +192,21 @@ const showRecurringIncomeDialog = ref(false)
 const editingOneTimeIncome = ref<OneTimeIncomeDTO | undefined>()
 const editingRecurringIncome = ref<RecurringIncomeDTO | undefined>()
 const selectedMonth = ref<Date>(new Date())
-const householdId = ref<string | undefined>()
+const householdStore = useHouseholdStore()
 
 const incomeApi = useIncomeApi()
 const confirm = useConfirm()
-const { getHouseholds } = useHouseholdApi()
 
 onMounted(() => {
   loadData()
 })
+
+watch(
+  () => householdStore.currentHousehold,
+  () => {
+    loadData()
+  },
+)
 
 const totalOneTimeIncome = computed(() => {
   if (!oneTimeIncomes.value) return 0
@@ -219,21 +225,20 @@ const totalMonthlyIncome = computed(() => {
 })
 
 const loadData = async () => {
-  const data = await getHouseholds()
-  if (data && data.length > 0) {
-    householdId.value = data[0].id
-  }
   await loadIncomes()
 }
 
 const loadIncomes = async (month?: Date) => {
-  if (!householdId.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
   try {
     loading.value = true
     const targetMonth = month || selectedMonth.value
-    const incomes = await incomeApi.getIncomesForMonth(targetMonth, householdId.value)
+    const incomes = await incomeApi.getIncomesForMonth(
+      targetMonth,
+      householdStore.currentHousehold.id,
+    )
     oneTimeIncomes.value = incomes.oneTimeIncomes
     recurringIncomes.value = incomes.recurringIncomes
   } catch (error) {
@@ -331,20 +336,20 @@ const deleteRecurringIncome = async (income: RecurringIncomeDTO) => {
 }
 
 const saveOneTimeIncome = async (income: OneTimeIncomeDTO) => {
-  if (!householdId.value) {
+  if (!householdStore.currentHousehold) {
     return
   }
   try {
     if (income.id === EMPTY_GUID) {
       // Adding new income
-      income.householdId = householdId.value!
+      income.householdId = householdStore.currentHousehold.id
       const savedIncome = await incomeApi.addOneTimeIncome(income)
       if (oneTimeIncomes.value) {
         oneTimeIncomes.value.push(savedIncome)
       }
     } else {
       // Editing existing income
-      var updatedIncome = await incomeApi.updateOneTimeIncome(income)
+      const updatedIncome = await incomeApi.updateOneTimeIncome(income)
 
       // For now, just update local state
       if (oneTimeIncomes.value) {
@@ -362,19 +367,19 @@ const saveOneTimeIncome = async (income: OneTimeIncomeDTO) => {
 
 const saveRecurringIncome = async (income: RecurringIncomeDTO) => {
   try {
-    if (!householdId.value) {
+    if (!householdStore.currentHousehold) {
       return
     }
     if (income.id === EMPTY_GUID) {
       // Adding new income
-      income.householdId = householdId.value!
+      income.householdId = householdStore.currentHousehold.id
       const savedIncome = await incomeApi.addRecurringIncome(income)
       if (recurringIncomes.value) {
         recurringIncomes.value.push(savedIncome)
       }
     } else {
       // Editing existing income
-      var updatedIncome = await incomeApi.updateRecurringIncome(income)
+      const updatedIncome = await incomeApi.updateRecurringIncome(income)
 
       // For now, just update local state
       if (recurringIncomes.value) {

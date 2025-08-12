@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using FinTrack.Api.Background;
+using FinTrack.Api.Background.Filters;
 using FinTrack.Api.Middleware;
 using FinTrack.BusinessLogic;
 using FinTrack.BusinessLogic.Services;
@@ -7,6 +9,7 @@ using FinTrack.DataAccess;
 using FinTrack.Shared.Config;
 using FinTrack.Shared.Entities.Auth;
 using FinTrack.Shared.Exceptions;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +21,11 @@ var apiConfig = builder.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
 if (apiConfig == null)
 {
     throw new BaseException("Config is corrupt");
+}
+var hangfireConfig = builder.Configuration.GetSection("Hangfire").Get<HangfireConfig>();
+if (hangfireConfig == null)
+{
+    throw new Exception("Error - incorrect hangfire config - unable to map hangfire config");
 }
 
 // Add services to the container.
@@ -85,14 +93,25 @@ authenticationBuilder.AddJwtBearer(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
 });
-if (apiConfig.Authentication.Google.Enabled) {
+//if (apiConfig.Authentication.Google.Enabled) {
+//    authenticationBuilder.AddGoogle(options =>
+//    {
+//        options.ClientId = apiConfig.Authentication.Google.ClientId;
+//        options.ClientSecret = apiConfig.Authentication.Google.ClientSecret;
+//    });
+//}
 
-    authenticationBuilder.AddGoogle(options =>
-    {
-        options.ClientId = apiConfig.Authentication.Google.ClientId;
-        options.ClientSecret = apiConfig.Authentication.Google.ClientSecret;
-    });
-}
+// Hangfire
+// Register Hangfire with in-memory storage:
+builder.Services.AddHangfire(config =>
+{
+    config.UseInMemoryStorage();
+});
+
+// Optionally: configure Hangfire Server
+builder.Services.AddHangfireServer();
+builder.Services.AddJobs();
+
 
 var app = builder.Build();
 
@@ -104,6 +123,13 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors();
 app.UseHttpsRedirection();
+
+
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions()
+{
+    Authorization = [new HangfireDashboardAuthFilter(hangfireConfig.Username, hangfireConfig.Password)]
+});
 
 app.UseAuthorization();
 
@@ -130,5 +156,7 @@ using (var scope = app.Services.GetRequiredService<IServiceScopeFactory>().Creat
     authService.EnsureRolesExistInDb().Wait();
     authService.EnsureAdminExists().Wait();
 }
+
+BackgroundJobsManager.RegisterJobs();
 
 app.Run();

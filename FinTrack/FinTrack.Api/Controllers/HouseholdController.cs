@@ -1,4 +1,4 @@
-﻿using AcademyOS.Api.Controllers;
+﻿using FinTrack.Api.Controllers;
 using FinTrack.BusinessLogic.Services;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.DTO.Setup;

@@ -45,6 +45,14 @@ namespace FinTrack.DataAccess.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -112,9 +120,14 @@ namespace FinTrack.DataAccess.Migrations
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("RecurringExpenseId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ExpenseBucketId");
+
+                    b.HasIndex("RecurringExpenseId");
 
                     b.HasIndex("HouseholdId", "Date");
 
@@ -194,6 +207,42 @@ namespace FinTrack.DataAccess.Migrations
                     b.HasIndex("HouseholdId");
 
                     b.ToTable("OneTimeIncomes");
+                });
+
+            modelBuilder.Entity("FinTrack.Shared.Entities.RecurringExpense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("ExpenseBucketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("NextDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Recurrence")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseBucketId");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.HasIndex("NextDate");
+
+                    b.ToTable("RecurringExpenses");
                 });
 
             modelBuilder.Entity("FinTrack.Shared.Entities.RecurringIncome", b =>
@@ -371,9 +420,16 @@ namespace FinTrack.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("FinTrack.Shared.Entities.RecurringExpense", "RecurringExpense")
+                        .WithMany()
+                        .HasForeignKey("RecurringExpenseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("ExpenseBucket");
 
                     b.Navigation("Household");
+
+                    b.Navigation("RecurringExpense");
                 });
 
             modelBuilder.Entity("FinTrack.Shared.Entities.ExpenseBucket", b =>
@@ -403,6 +459,24 @@ namespace FinTrack.DataAccess.Migrations
                         .HasForeignKey("HouseholdId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Household");
+                });
+
+            modelBuilder.Entity("FinTrack.Shared.Entities.RecurringExpense", b =>
+                {
+                    b.HasOne("FinTrack.Shared.Entities.ExpenseBucket", "ExpenseBucket")
+                        .WithMany()
+                        .HasForeignKey("ExpenseBucketId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("FinTrack.Shared.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExpenseBucket");
 
                     b.Navigation("Household");
                 });

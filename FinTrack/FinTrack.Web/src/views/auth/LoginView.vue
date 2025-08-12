@@ -67,6 +67,11 @@
             Sign up
           </RouterLink>
         </div>
+        <div class="text-center mt-2">
+          <RouterLink class="hover:underline text-[#3bbfa1]" :to="{ name: 'ForgotPassword' }">
+            Forgot your password?
+          </RouterLink>
+        </div>
       </div>
     </div>
   </div>

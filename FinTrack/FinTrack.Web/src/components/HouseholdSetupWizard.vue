@@ -1,12 +1,14 @@
 <template>
-  <div class="household-setup-wizard pt-12 max-w-5xl mx-auto">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Household Setup</h1>
-      <p class="text-gray-600">Let's set up your household financial tracking in 3 simple steps.</p>
+  <div class="household-setup-wizard pt-6 sm:pt-12 max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="mb-4 sm:mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Household Setup</h1>
+      <p class="text-sm sm:text-base text-gray-600">
+        Let's set up your household financial tracking in 3 simple steps.
+      </p>
     </div>
 
     <Stepper v-model:value="activeStep" class="basis-50rem">
-      <StepList>
+      <StepList ref="stepListRef" class="step-list-container">
         <Step value="1">Household Information</Step>
         <Step value="2">Income Sources</Step>
         <Step value="3">Expense Categories</Step>
@@ -15,50 +17,51 @@
       <StepPanels>
         <StepPanel value="1">
           <div class="flex flex-col">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <h2 class="text-xl font-semibold text-gray-800 mb-2">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                 Let's give your household a name
               </h2>
-              <p class="text-gray-600 mb-8">
+              <p class="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
                 This will be the main identifier for your financial plan. You can use your family
                 name (e.g., "The Miller Household") or your address ("123 Maple St").
               </p>
               <div class="flex justify-center">
                 <FloatLabel variant="on">
-                  <InputText id="householdName" v-model="household.name" class="w-full md:w-80" />
+                  <InputText id="householdName" v-model="household.name" class="w-full max-w-sm" />
                   <label for="householdName">Household Name</label>
                 </FloatLabel>
               </div>
             </div>
           </div>
-          <div class="flex pt-6 justify-end">
+          <div class="flex pt-4 sm:pt-6 justify-end">
             <Button
               label="Next"
               icon="pi pi-arrow-right"
               iconPos="right"
               @click="nextStep"
               :disabled="!household.name"
+              class="w-full sm:w-auto"
             />
           </div>
         </StepPanel>
 
         <StepPanel value="2">
-          <div class="flex flex-col space-y-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
-              <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          <div class="flex flex-col space-y-4 sm:space-y-6">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
                 <i class="pi pi-dollar mr-2"></i>
                 Recurring Income Sources
               </h2>
-              <p class="text-gray-600 mb-6">
+              <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Add your regular income sources like salary, freelance work, investments, etc.
               </p>
 
               <!-- Income Form -->
-              <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 class="text-lg font-medium text-gray-700 mb-4">
+              <div class="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                   {{ editingIncome ? 'Edit Income Source' : 'Add New Income Source' }}
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-3 sm:gap-4">
                   <div>
                     <FloatLabel variant="on">
                       <InputText
@@ -108,7 +111,7 @@
                       <label for="endDate">End Date (Optional)</label>
                     </FloatLabel>
                   </div>
-                  <div class="md:col-span-2">
+                  <div>
                     <FloatLabel variant="on">
                       <Select
                         id="recurrence"
@@ -122,36 +125,46 @@
                     </FloatLabel>
                   </div>
                 </div>
-                <div class="flex justify-end space-x-2 mt-4">
+                <div
+                  class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-4"
+                >
                   <Button
                     v-if="editingIncome"
                     label="Cancel"
                     severity="secondary"
                     @click="cancelEdit"
+                    class="w-full sm:w-auto order-2 sm:order-1"
                   />
                   <Button
                     :label="editingIncome ? 'Update' : 'Add Income'"
                     icon="pi pi-plus"
                     @click="saveIncome"
                     :disabled="!isIncomeValid"
+                    class="w-full sm:w-auto order-1 sm:order-2"
                   />
                 </div>
               </div>
 
               <!-- Income List -->
               <div v-if="recurringIncomes.length > 0">
-                <h3 class="text-lg font-medium text-gray-700 mb-4">Added Income Sources</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  Added Income Sources
+                </h3>
                 <div class="space-y-3">
                   <div
                     v-for="(income, index) in recurringIncomes"
                     :key="index"
-                    class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-white border border-gray-200 rounded-lg space-y-3 sm:space-y-0"
                   >
                     <div class="flex-1">
-                      <div class="flex items-center space-x-4">
-                        <div>
-                          <p class="font-medium text-gray-900">{{ income.description }}</p>
-                          <p class="text-sm text-gray-500">
+                      <div
+                        class="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4"
+                      >
+                        <div class="flex-1">
+                          <p class="font-medium text-gray-900 text-sm sm:text-base">
+                            {{ income.description }}
+                          </p>
+                          <p class="text-xs sm:text-sm text-gray-500">
                             ${{ income.amount.toLocaleString() }} •
                             {{ getRecurrenceLabel(income.recurrence) }}
                           </p>
@@ -162,7 +175,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 self-end sm:self-auto">
                       <Button
                         icon="pi pi-pencil"
                         severity="secondary"
@@ -182,41 +195,50 @@
                 </div>
               </div>
 
-              <div v-else class="text-center py-8">
-                <i class="pi pi-info-circle text-2xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">No income sources added yet</p>
-                <p class="text-sm text-gray-400">Add your first income source above</p>
+              <div v-else class="text-center py-6 sm:py-8">
+                <i class="pi pi-info-circle text-xl sm:text-2xl text-gray-400 mb-2"></i>
+                <p class="text-sm sm:text-base text-gray-500">No income sources added yet</p>
+                <p class="text-xs sm:text-sm text-gray-400">Add your first income source above</p>
               </div>
             </div>
           </div>
-          <div class="flex pt-6 justify-between">
-            <Button label="Back" icon="pi pi-arrow-left" severity="secondary" @click="prevStep" />
+          <div
+            class="flex flex-col sm:flex-row pt-4 sm:pt-6 justify-between space-y-2 sm:space-y-0"
+          >
+            <Button
+              label="Back"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              @click="prevStep"
+              class="w-full sm:w-auto order-2 sm:order-1"
+            />
             <Button
               :label="recurringIncomes.length > 0 ? 'Next' : 'Skip'"
               icon="pi pi-arrow-right"
               iconPos="right"
               @click="nextStep"
+              class="w-full sm:w-auto order-1 sm:order-2"
             />
           </div>
         </StepPanel>
 
         <StepPanel value="3">
-          <div class="flex flex-col space-y-6">
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
-              <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          <div class="flex flex-col space-y-4 sm:space-y-6">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
                 <i class="pi pi-tags mr-2"></i>
                 Expense Buckets
               </h2>
-              <p class="text-gray-600 mb-6">
+              <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Add your expense buckets like Food, Transport, Utilities, Entertainment, etc.
               </p>
 
               <!-- Expense Bucket Form -->
-              <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 class="text-lg font-medium text-gray-700 mb-4">
+              <div class="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
                   {{ editingBucket ? 'Edit Expense Bucket' : 'Add New Expense Bucket' }}
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-3 sm:gap-4">
                   <div>
                     <FloatLabel variant="on">
                       <InputText
@@ -242,7 +264,7 @@
                       <label for="bucketAmount">Estimated Monthly Amount</label>
                     </FloatLabel>
                   </div>
-                  <div class="md:col-span-2">
+                  <div>
                     <FloatLabel variant="on">
                       <InputText
                         id="bucketDescription"
@@ -254,36 +276,46 @@
                     </FloatLabel>
                   </div>
                 </div>
-                <div class="flex justify-end space-x-2 mt-4">
+                <div
+                  class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-4"
+                >
                   <Button
                     v-if="editingBucket"
                     label="Cancel"
                     severity="secondary"
                     @click="cancelBucketEdit"
+                    class="w-full sm:w-auto order-2 sm:order-1"
                   />
                   <Button
                     :label="editingBucket ? 'Update' : 'Add Bucket'"
                     icon="pi pi-plus"
                     @click="saveBucket"
                     :disabled="!isBucketValid"
+                    class="w-full sm:w-auto order-1 sm:order-2"
                   />
                 </div>
               </div>
 
               <!-- Expense Buckets List -->
               <div v-if="expenseBuckets.length > 0">
-                <h3 class="text-lg font-medium text-gray-700 mb-4">Added Expense Buckets</h3>
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  Added Expense Buckets
+                </h3>
                 <div class="space-y-3">
                   <div
                     v-for="(bucket, index) in expenseBuckets"
                     :key="index"
-                    class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-white border border-gray-200 rounded-lg space-y-3 sm:space-y-0"
                   >
                     <div class="flex-1">
-                      <div class="flex items-center space-x-4">
-                        <div>
-                          <p class="font-medium text-gray-900">{{ bucket.name }}</p>
-                          <p class="text-sm text-gray-500">
+                      <div
+                        class="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4"
+                      >
+                        <div class="flex-1">
+                          <p class="font-medium text-gray-900 text-sm sm:text-base">
+                            {{ bucket.name }}
+                          </p>
+                          <p class="text-xs sm:text-sm text-gray-500">
                             ${{ bucket.monthlyAmount.toLocaleString() }}
                           </p>
                           <p v-if="bucket.description" class="text-xs text-gray-400">
@@ -292,7 +324,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 self-end sm:self-auto">
                       <Button
                         icon="pi pi-pencil"
                         severity="secondary"
@@ -312,21 +344,30 @@
                 </div>
               </div>
 
-              <div v-else class="text-center py-8">
-                <i class="pi pi-info-circle text-2xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">No expense buckets added yet</p>
-                <p class="text-sm text-gray-400">Add your first expense bucket above</p>
+              <div v-else class="text-center py-6 sm:py-8">
+                <i class="pi pi-info-circle text-xl sm:text-2xl text-gray-400 mb-2"></i>
+                <p class="text-sm sm:text-base text-gray-500">No expense buckets added yet</p>
+                <p class="text-xs sm:text-sm text-gray-400">Add your first expense bucket above</p>
               </div>
             </div>
           </div>
-          <div class="flex pt-6 justify-between">
-            <Button label="Back" icon="pi pi-arrow-left" severity="secondary" @click="prevStep" />
+          <div
+            class="flex flex-col sm:flex-row pt-4 sm:pt-6 justify-between space-y-2 sm:space-y-0"
+          >
+            <Button
+              label="Back"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              @click="prevStep"
+              class="w-full sm:w-auto order-2 sm:order-1"
+            />
             <Button
               label="Complete Setup"
               icon="pi pi-check"
               iconPos="right"
               severity="success"
               @click="completeSetup"
+              class="w-full sm:w-auto order-1 sm:order-2"
             />
           </div>
         </StepPanel>
@@ -336,7 +377,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import Stepper from 'primevue/stepper'
 import StepList from 'primevue/steplist'
 import Step from 'primevue/step'
@@ -354,14 +395,17 @@ import {
 } from '@/api/models'
 import { RecurrenceType } from '@/models/recurrenceType'
 import { useHouseholdApi } from '@/api/householdApi'
+import { useDeviceType } from '@/composables/useDeviceType'
 
 const houstholdApi = useHouseholdApi()
+const { isMobile } = useDeviceType()
 
 const emit = defineEmits<{
   (e: 'completed'): void
 }>()
 
 const activeStep = ref('1')
+const stepListRef = ref<any>(null)
 const household = ref<HouseholdDTO>({
   id: EMPTY_GUID,
   name: '',
@@ -437,6 +481,57 @@ const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
   return date.toLocaleDateString()
 }
+
+// Smooth scroll function for mobile stepper
+const scrollToActiveStep = async () => {
+  if (!isMobile.value) return
+
+  await nextTick()
+
+  // Find the step list container element
+  const stepListElement = document.querySelector('.step-list-container') as HTMLElement
+  if (!stepListElement) return
+
+  // Find the active step element - try multiple selectors
+  let activeStepElement = stepListElement.querySelector('[aria-selected="true"]') as HTMLElement
+
+  // Alternative selector if the first one doesn't work
+  if (!activeStepElement) {
+    activeStepElement = stepListElement.querySelector(
+      '.p-stepper-step.p-stepper-step-active',
+    ) as HTMLElement
+  }
+
+  // Another fallback selector
+  if (!activeStepElement) {
+    const stepIndex = parseInt(activeStep.value) - 1
+    const allSteps = stepListElement.querySelectorAll('[data-pc-name="step"]')
+    activeStepElement = allSteps[stepIndex] as HTMLElement
+  }
+
+  if (activeStepElement) {
+    // Calculate the scroll position to center the active step
+    const stepListWidth = stepListElement.clientWidth
+    const stepLeft = activeStepElement.offsetLeft
+    const stepWidth = activeStepElement.offsetWidth
+
+    // Calculate the position to center the step
+    const targetScrollLeft = stepLeft - stepListWidth / 2 + stepWidth / 2
+
+    // Scroll smoothly to the target position
+    stepListElement.scrollTo({
+      left: Math.max(0, targetScrollLeft),
+      behavior: 'smooth',
+    })
+  }
+}
+
+// Watch for active step changes and trigger smooth scroll on mobile
+watch(activeStep, () => {
+  if (isMobile.value) {
+    scrollToActiveStep()
+  }
+})
 
 const resetCurrentIncome = () => {
   currentIncome.value = {
@@ -563,7 +658,6 @@ const nextStep = () => {
   const currentStep = parseInt(activeStep.value)
   if (currentStep < 3) {
     activeStep.value = (currentStep + 1).toString()
-    console.log(`Moving to step ${activeStep.value}`)
   }
 }
 
@@ -571,7 +665,6 @@ const prevStep = () => {
   const currentStep = parseInt(activeStep.value)
   if (currentStep > 1) {
     activeStep.value = (currentStep - 1).toString()
-    console.log(`Moving to step ${activeStep.value}`)
   }
 }
 
@@ -589,4 +682,31 @@ const completeSetup = async () => {
 
 <style scoped>
 /* Custom styling for the stepper content areas */
+
+/* Enable horizontal scrolling on mobile for step list */
+@media (max-width: 768px) {
+  :deep(.step-list-container) {
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  :deep(.step-list-container::-webkit-scrollbar) {
+    display: none;
+  }
+
+  /* Ensure steps are laid out horizontally with proper spacing */
+  :deep(.p-stepper-list) {
+    display: flex;
+    flex-wrap: nowrap;
+    min-width: max-content;
+  }
+
+  /* Make individual steps more compact on mobile */
+  :deep(.p-stepper-step) {
+    flex-shrink: 0;
+    min-width: fit-content;
+  }
+}
 </style>

@@ -105,7 +105,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useDeviceType } from '@/composables/useDeviceType'
-import { Dialog, Button, InputNumber, DatePicker, InputText, Textarea, Select } from 'primevue'
+import { Dialog, Button, InputNumber, DatePicker, Textarea, Select } from 'primevue'
 import type { RecurringIncomeDTO } from '@/api/models'
 import type { RecurrenceType } from '@/models/recurrenceType'
 import { EMPTY_GUID } from '@/api/models'

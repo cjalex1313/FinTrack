@@ -1,0 +1,80 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Docker Compose: Start All Services",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "docker-compose-up"
+    },
+    {
+      "name": "Docker Compose: Debug .NET API",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickRemoteProcess}",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "fintrack-fintrack.api-1"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceFolder}",
+        "quoteArgs": false
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceFolder}",
+        "/app": "${workspaceFolder}"
+      },
+      "preLaunchTask": "docker-compose-debug-up"
+    },
+    {
+      "name": "Docker: Attach to .NET API",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "1",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": ["exec", "-i", "fintrack-fintrack.api-1"],
+        "debuggerPath": "/vsdbg/vsdbg",
+        "pipeCwd": "${workspaceFolder}",
+        "quoteArgs": false
+      },
+      "sourceFileMap": {
+        "/src": "${workspaceFolder}",
+        "/app": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": ".NET API (Local Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/FinTrack.Api/bin/Debug/net9.0/FinTrack.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/FinTrack.Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7005;http://localhost:5284"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      },
+      "preLaunchTask": "build"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "containerName",
+      "description": "Container name",
+      "default": "fintrack-fintrack.api-1",
+      "type": "promptString"
+    }
+  ]
+}

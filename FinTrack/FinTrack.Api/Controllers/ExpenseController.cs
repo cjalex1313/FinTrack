@@ -1,5 +1,5 @@
 ﻿using System.Net;
-using AcademyOS.Api.Controllers;
+using FinTrack.Api.Controllers;
 using FinTrack.BusinessLogic.Services;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.Entities;
@@ -28,7 +28,22 @@ public class ExpenseController : BaseController
     public async Task<IActionResult> CreateExpense([FromBody] ExpenseDTO dto)
     {
         var expense = await _expenseService.AddExpense(dto);
-        return Ok(expense);
+        return Ok(expense.MapToDTO());
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateExpense([FromBody] ExpenseDTO dto)
+    {
+        Expense expense = await _expenseService.UpdateExpense(dto);
+        var response = expense.MapToDTO();
+        return Ok(response);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteExpense([FromRoute] Guid id)
+    {
+        await _expenseService.DeleteExpense(id);
+        return Ok();
     }
 
     [HttpGet("buckets")]
