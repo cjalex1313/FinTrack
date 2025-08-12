@@ -34,7 +34,6 @@ export function useAuthApi() {
 
   const externalLoginCallback = async (userData) => {
     const response = await baseApi.post<LoginResponse>('api/auth/ExternalLoginCallback', userData)
-    debugger;
     return response.data
   }
   return { login, getProfile, register, confirmEmail, externalLoginCallback }

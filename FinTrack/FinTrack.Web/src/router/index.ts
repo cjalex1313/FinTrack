@@ -60,11 +60,6 @@ const router = createRouter({
       ],
     },
     {
-      path: '/auth/signin-oidc',
-      name: 'signin-oidc',
-      component: () => import('@/views/auth/SignInOidc.vue'),
-    },
-    {
       path: '/admin',
       name: 'AdminLayout',
       component: () => import('@/layouts/AdminLayout.vue'),
