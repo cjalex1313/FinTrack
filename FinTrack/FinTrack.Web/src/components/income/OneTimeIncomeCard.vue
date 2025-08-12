@@ -30,7 +30,7 @@
 
     <div v-if="showActionButtons" class="flex gap-3 pt-3 border-t border-gray-100">
       <Button
-        @click="emit('edit', income)"
+        @click="$emit('edit', income)"
         size="small"
         severity="secondary"
         outlined
@@ -40,7 +40,7 @@
         Edit
       </Button>
       <Button
-        @click="emit('delete', income)"
+        @click="$emit('delete', income)"
         size="small"
         severity="danger"
         outlined
