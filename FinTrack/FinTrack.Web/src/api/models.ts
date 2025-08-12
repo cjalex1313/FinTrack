@@ -91,3 +91,13 @@ export interface UpdateProfileNamesDTO {
   firstName: string | null
   lastName: string | null
 }
+
+export interface RecurringExpenseDTO {
+  id: string
+  householdId: string
+  amount: number
+  nextDate: string
+  recurrence: RecurrenceType
+  description?: string | null
+  expenseBucketId: string | null
+}

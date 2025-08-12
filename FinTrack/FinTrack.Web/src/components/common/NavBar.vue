@@ -85,11 +85,19 @@
               >
               <RouterLink
                 v-if="householdStore.currentHousehold"
+                to="/recurring-expenses"
+                class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
+                exactActiveClass="bg-gray-900 text-white"
+                >Recurring Expenses</RouterLink
+              >
+              <RouterLink
+                v-if="householdStore.currentHousehold"
                 to="/expenses"
                 class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
                 exactActiveClass="bg-gray-900 text-white"
                 >Expenses</RouterLink
               >
+
               <!-- <RouterLink
                 to="/skills-library"
                 class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -154,11 +162,19 @@
         >
         <RouterLink
           v-if="householdStore.currentHousehold"
+          to="/recurring-expenses"
+          class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"
+          exactActiveClass="bg-gray-900 text-white"
+          >Recurring Expenses</RouterLink
+        >
+        <RouterLink
+          v-if="householdStore.currentHousehold"
           to="/expenses"
           class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"
           exactActiveClass="bg-gray-900 text-white"
           >Expenses</RouterLink
         >
+
         <!-- <RouterLink
           to="/skills-library"
           class="block rounded-md text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 text-base font-medium"

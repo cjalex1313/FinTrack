@@ -57,13 +57,11 @@
 
 <script setup lang="ts">
 import { InputText, FloatLabel, Button } from 'primevue'
-import { useRouter } from 'vue-router'
 import { useVuelidate } from '@vuelidate/core'
 import { required, email as emailValidator } from '@vuelidate/validators'
 import { computed, ref } from 'vue'
 import { useAuthApi } from '../../api/authApi'
 
-const router = useRouter()
 const authApi = useAuthApi()
 
 const email = ref('')

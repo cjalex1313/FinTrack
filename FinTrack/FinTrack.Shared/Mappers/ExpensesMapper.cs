@@ -28,4 +28,17 @@ public static class ExpensesMapper
             ExpenseBucketId = expense.ExpenseBucketId
         };       
     }
+
+    public static RecurringExpenseDTO MapToDTO(this RecurringExpense expense)
+    {
+        return new RecurringExpenseDTO()
+        {
+            Id = expense.Id,
+            ExpenseBucketId = expense.ExpenseBucketId,
+            Amount = expense.Amount,
+            Recurrence = expense.Recurrence,
+            Description = expense.Description,
+            NextDate = expense.NextDate       
+        };       
+    }
 }

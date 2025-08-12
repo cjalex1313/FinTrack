@@ -5,16 +5,16 @@ import BaseLayout from '@/layouts/BaseLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 
-const isGuid = (guid: string): boolean => {
-  // Return false for non-string or empty inputs
-  if (!guid || typeof guid !== 'string') {
-    return false
-  }
+// const isGuid = (guid: string): boolean => {
+//   // Return false for non-string or empty inputs
+//   if (!guid || typeof guid !== 'string') {
+//     return false
+//   }
 
-  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+//   const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-  return guidRegex.test(guid)
-}
+//   return guidRegex.test(guid)
+// }
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +44,11 @@ const router = createRouter({
           path: '/expenses',
           name: 'Expenses',
           component: () => import('@/views/ExpensesView.vue'),
+        },
+        {
+          path: '/recurring-expenses',
+          name: 'RecurringExpenses',
+          component: () => import('@/views/RecurringExpensesView.vue'),
         },
         {
           path: '/profile',

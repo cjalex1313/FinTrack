@@ -5,7 +5,7 @@
     :draggable="false"
     :maximized="isMobile"
     :class="{ 'p-dialog-maximized': isMobile }"
-    :header="isEditMode ? 'Edit Recurring Income' : 'Add Recurring Income'"
+    :header="isEditMode ? 'Edit Recurring Expense' : 'Add Recurring Expense'"
     @update:visible="handleVisibilityChange"
   >
     <div class="w-full md:w-96">
@@ -28,16 +28,31 @@
           <small v-if="errors.amount" class="p-error text-red-500">{{ errors.amount }}</small>
         </div>
 
+        <!-- Next Date Field -->
+        <div class="field">
+          <label for="nextDate" class="block text-sm font-medium mb-2">Next Date *</label>
+          <DatePicker
+            id="nextDate"
+            v-model="formData.nextDate"
+            date-format="mm/dd/yy"
+            class="w-full"
+            :min-date="minDateValue"
+            :class="{ 'p-invalid': errors.nextDate }"
+            placeholder="Select next occurrence date"
+          />
+          <small v-if="errors.nextDate" class="p-error text-red-500">{{ errors.nextDate }}</small>
+        </div>
+
         <!-- Recurrence Type Field -->
         <div class="field">
-          <label for="recurrence" class="block text-sm font-medium mb-2">Frequency *</label>
+          <label for="recurrence" class="block text-sm font-medium mb-2">Recurrence *</label>
           <Select
             id="recurrence"
             v-model="formData.recurrence"
             :options="recurrenceOptions"
             option-label="label"
             option-value="value"
-            placeholder="Select frequency"
+            placeholder="Select recurrence type"
             class="w-full"
             :class="{ 'p-invalid': errors.recurrence }"
           />
@@ -46,32 +61,19 @@
           }}</small>
         </div>
 
-        <!-- Start Date Field -->
+        <!-- Expense Bucket Field -->
         <div class="field">
-          <label for="startDate" class="block text-sm font-medium mb-2">Start Date *</label>
-          <DatePicker
-            id="startDate"
-            v-model="formData.startDate"
-            date-format="mm/dd/yy"
+          <label for="expenseBucket" class="block text-sm font-medium mb-2">Expense Bucket</label>
+          <Select
+            id="expenseBucket"
+            v-model="formData.expenseBucketId"
+            :options="expenseBuckets"
+            option-label="name"
+            option-value="id"
+            placeholder="Select expense bucket (optional)"
             class="w-full"
-            :class="{ 'p-invalid': errors.startDate }"
-            placeholder="Select start date"
-          />
-          <small v-if="errors.startDate" class="p-error text-red-500">{{ errors.startDate }}</small>
-        </div>
-
-        <!-- End Date Field -->
-        <div class="field">
-          <label for="endDate" class="block text-sm font-medium mb-2">End Date</label>
-          <DatePicker
-            id="endDate"
-            v-model="formData.endDate"
-            date-format="mm/dd/yy"
-            class="w-full"
-            placeholder="Select end date (optional)"
             show-clear
           />
-          <small class="text-gray-500 text-xs">Leave empty for ongoing income</small>
         </div>
 
         <!-- Description Field -->
@@ -105,79 +107,83 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useDeviceType } from '@/composables/useDeviceType'
-import { Dialog, Button, InputNumber, DatePicker, Textarea, Select } from 'primevue'
-import type { RecurringIncomeDTO } from '@/api/models'
-import type { RecurrenceType } from '@/models/recurrenceType'
+import { Dialog, Button, InputNumber, DatePicker, Select, Textarea } from 'primevue'
+import type { RecurringExpenseDTO, ExpenseBucketDTO } from '@/api/models'
 import { EMPTY_GUID } from '@/api/models'
+import { RecurrenceType } from '@/models/recurrenceType'
 import { format } from 'date-fns'
 
 interface Props {
-  income?: RecurringIncomeDTO
+  householdId: string
+  expenseBuckets: ExpenseBucketDTO[]
+  recurringExpense?: RecurringExpenseDTO
 }
+
+const minDateValue = new Date()
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: 'save', income: RecurringIncomeDTO): void
+  (e: 'save', recurringExpense: RecurringExpenseDTO): void
   (e: 'closed'): void
 }>()
 
 const { isMobile } = useDeviceType()
 
-// Recurrence options
-const recurrenceOptions = [
-  { label: 'Daily', value: 0 },
-  { label: 'Weekly', value: 1 },
-  { label: 'Bi-weekly', value: 2 },
-  { label: 'Monthly', value: 3 },
-  { label: 'Quarterly', value: 4 },
-  { label: 'Yearly', value: 5 },
-]
-
 // Form state
 const saving = ref(false)
 const formData = ref<{
   amount: number | null
+  nextDate: Date
   recurrence: RecurrenceType | null
-  startDate: Date
-  endDate: Date | null
+  expenseBucketId: string | null
   description?: string | null
 }>({
   amount: null,
+  nextDate: new Date(),
   recurrence: null,
-  startDate: new Date(),
-  endDate: null,
+  expenseBucketId: null,
   description: null,
 })
 
 // Validation errors
 const errors = ref<{
   amount?: string
+  nextDate?: string
   recurrence?: string
-  startDate?: string
 }>({})
 
+// Recurrence options for the dropdown
+const recurrenceOptions = [
+  { label: 'Daily', value: RecurrenceType.Daily },
+  { label: 'Weekly', value: RecurrenceType.Weekly },
+  { label: 'Bi-Weekly', value: RecurrenceType.BiWeekly },
+  { label: 'Monthly', value: RecurrenceType.Monthly },
+  { label: 'Quarterly', value: RecurrenceType.Quarterly },
+  { label: 'Yearly', value: RecurrenceType.Yearly },
+]
+
 // Computed properties
-const isEditMode = computed(() => !!props.income)
+const isEditMode = computed(() => !!props.recurringExpense)
 
 // Initialize form data
 const initializeForm = () => {
-  if (props.income) {
-    // Edit mode - populate with existing income data
+  if (props.recurringExpense) {
+    // Edit mode - populate with existing recurring expense data
     formData.value = {
-      amount: props.income.amount,
-      recurrence: props.income.recurrence,
-      startDate: new Date(props.income.startDate),
-      endDate: props.income.endDate ? new Date(props.income.endDate) : null,
-      description: props.income.description,
+      amount: props.recurringExpense.amount,
+      nextDate: new Date(props.recurringExpense.nextDate),
+      recurrence: props.recurringExpense.recurrence,
+      expenseBucketId: props.recurringExpense.expenseBucketId,
+      description: props.recurringExpense.description,
     }
   } else {
     // Add mode - set defaults
     formData.value = {
       amount: null,
+      nextDate: new Date(),
       recurrence: null,
-      startDate: new Date(),
-      endDate: null,
+      expenseBucketId: null,
       description: null,
     }
   }
@@ -193,13 +199,13 @@ const validateForm = (): boolean => {
     isValid = false
   }
 
-  if (formData.value.recurrence === null || formData.value.recurrence === undefined) {
-    errors.value.recurrence = 'Frequency is required'
+  if (!formData.value.nextDate) {
+    errors.value.nextDate = 'Next date is required'
     isValid = false
   }
 
-  if (!formData.value.startDate) {
-    errors.value.startDate = 'Start date is required'
+  if (formData.value.recurrence === null || formData.value.recurrence === undefined) {
+    errors.value.recurrence = 'Recurrence type is required'
     isValid = false
   }
 
@@ -225,17 +231,17 @@ const trySave = async () => {
   saving.value = true
 
   try {
-    const incomeDTO: RecurringIncomeDTO = {
-      id: props.income?.id || EMPTY_GUID,
-      householdId: props.income?.householdId || EMPTY_GUID,
+    const recurringExpenseDTO: RecurringExpenseDTO = {
+      id: props.recurringExpense?.id || EMPTY_GUID,
+      householdId: props.householdId,
+      expenseBucketId: formData.value.expenseBucketId,
       amount: formData.value.amount!,
+      nextDate: format(formData.value.nextDate, 'yyyy-MM-dd'),
       recurrence: formData.value.recurrence!,
-      startDate: format(formData.value.startDate, 'yyyy-MM-dd'),
-      endDate: formData.value.endDate ? format(formData.value.endDate, 'yyyy-MM-dd') : null,
       description: formData.value.description,
     }
 
-    emit('save', incomeDTO)
+    emit('save', recurringExpenseDTO)
   } finally {
     saving.value = false
   }

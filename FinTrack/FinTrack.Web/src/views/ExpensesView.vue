@@ -70,7 +70,7 @@
               class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200"
             >
               <h3 class="text-sm font-medium text-orange-800 mb-1">Number of Expenses</h3>
-              <p class="text-2xl font-bold text-orange-600">{{ expenses.length }}</p>
+              <p class="text-2xl font-bold text-orange-600">{{ expenses?.length || 0 }}</p>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ onMounted(() => {
 
 watch(
   () => householdStore.currentHousehold,
-  (newHousehold) => {
+  () => {
     loadData()
   },
 )
@@ -223,7 +223,7 @@ const saveExpense = async (expense: ExpenseDTO) => {
       }
     } else {
       // Editing existing expense
-      var updatedExpense = await expenseApi.updateExpense(expense)
+      const updatedExpense = await expenseApi.updateExpense(expense)
 
       // Update local state
       if (expenses.value) {

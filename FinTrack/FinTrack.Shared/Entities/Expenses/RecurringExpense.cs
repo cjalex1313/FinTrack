@@ -1,14 +1,17 @@
-﻿namespace FinTrack.Shared.Entities;
+﻿using FinTrack.Shared.Common;
 
-public class Expense
+namespace FinTrack.Shared.Entities;
+
+public class RecurringExpense
 {
     public Guid Id { get; set; }
     public Guid HouseholdId { get; set; }
     public required decimal Amount { get; set; }
-    public required DateOnly Date { get; set; }
+    public DateOnly NextDate { get; set; }   
+    public required RecurrenceType Recurrence { get; set; }
     public string? Description { get; set; }
     public Guid? ExpenseBucketId { get; set; }
     
     public virtual Household? Household { get; set; }
-    public virtual ExpenseBucket? ExpenseBucket { get; set; }
+    public virtual ExpenseBucket? ExpenseBucket { get; set; }   
 }

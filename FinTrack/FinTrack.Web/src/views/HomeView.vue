@@ -181,14 +181,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useHouseholdApi } from '@/api/householdApi'
+import { ref, computed, watch } from 'vue'
 import type {
   OneTimeIncomeDTO,
   RecurringIncomeDTO,
   ExpenseBucketDTO,
   ExpenseDTO,
-  HouseholdDTO,
 } from '@/api/models'
 import HouseholdSetupWizard from '@/components/HouseholdSetupWizard.vue'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -209,10 +207,8 @@ const expenseBuckets = ref<ExpenseBucketDTO[] | null>(null)
 const currentMonthExpenses = ref<ExpenseDTO[] | null>(null)
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
-const loading = ref(true)
 const showExpenseDialog = ref(false)
 
-const { getHouseholds } = useHouseholdApi()
 const expenseApi = useExpenseApi()
 const incomeApi = useIncomeApi()
 const { isMobile } = useDeviceType()

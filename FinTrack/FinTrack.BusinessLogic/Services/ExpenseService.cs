@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using FinTrack.DataAccess;
+using FinTrack.Shared.Common;
 using FinTrack.Shared.DTO;
 using FinTrack.Shared.Entities;
 using FinTrack.Shared.Exceptions;
@@ -18,6 +19,13 @@ public interface IExpenseService
     Task DeleteExpenseBucket(Guid id);
     Task<Expense> UpdateExpense(ExpenseDTO dto);
     Task DeleteExpense(Guid id);
+    Task<RecurringExpense> AddRecurringExpense(RecurringExpenseDTO dto);
+    Task<RecurringExpense> UpdateRecurringExpense(RecurringExpenseDTO dto);
+    Task<RecurringExpense> GetRecurringExpense(Guid id);
+    Task DeleteRecurringExpense(Guid id);
+    Task<List<RecurringExpense>> GetRecurringExpensesForHousehold(Guid householdId);
+    Task<List<RecurringExpense>> GetRecurringExpensesToProcess(int skip, int take);
+    Task AddExpenseFromRecurring(RecurringExpense recurringExpense);
 }
 
 class ExpenseService : IExpenseService
@@ -136,5 +144,103 @@ class ExpenseService : IExpenseService
         }
         _dbContext.Expenses.Remove(expense);
         await _dbContext.SaveChangesAsync();       
+    }
+
+    public async Task<RecurringExpense> AddRecurringExpense(RecurringExpenseDTO dto)
+    {
+        var recurring = new RecurringExpense
+        {
+            HouseholdId = dto.HouseholdId,
+            Amount = dto.Amount,
+            NextDate = dto.NextDate,
+            Recurrence = dto.Recurrence,
+            Description = dto.Description,
+            ExpenseBucketId = dto.ExpenseBucketId
+        };
+
+        _dbContext.RecurringExpenses.Add(recurring);
+        await _dbContext.SaveChangesAsync();
+        return recurring;
+    }
+
+
+    public async Task<RecurringExpense> UpdateRecurringExpense(RecurringExpenseDTO dto)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(dto.Id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        recurring.Amount = dto.Amount;
+        recurring.NextDate = dto.NextDate;
+        recurring.Recurrence = dto.Recurrence;
+        recurring.Description = dto.Description;
+        recurring.ExpenseBucketId = dto.ExpenseBucketId;
+        await _dbContext.SaveChangesAsync();
+        return recurring;       
+    }
+
+    public async Task<RecurringExpense> GetRecurringExpense(Guid id)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        return recurring;       
+    }
+
+    public async Task DeleteRecurringExpense(Guid id)
+    {
+        var recurring = await _dbContext.RecurringExpenses.FindAsync(id);
+        if (recurring == null)
+        {
+            throw new BaseException("Recurring expense not found", (int)HttpStatusCode.NotFound);
+        }
+        _dbContext.RecurringExpenses.Remove(recurring);
+        await _dbContext.SaveChangesAsync();       
+    }
+
+    public async Task<List<RecurringExpense>> GetRecurringExpensesForHousehold(Guid householdId)
+    {
+        var recurringExpenses = await _dbContext.RecurringExpenses.Where(r => r.HouseholdId == householdId).ToListAsync();
+        return recurringExpenses;       
+    }
+
+    public async Task<List<RecurringExpense>> GetRecurringExpensesToProcess(int skip, int take)
+    {
+        var cutOffDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var recurringExpenses = await _dbContext.RecurringExpenses.Where(r => r.NextDate <= cutOffDate).OrderBy(e => e.Id).Skip(skip).Take(take).ToListAsync();
+        return recurringExpenses;
+    }
+
+    public async Task AddExpenseFromRecurring(RecurringExpense recurringExpense)
+    {
+        var newExpense = new Expense()
+        {
+            HouseholdId = recurringExpense.HouseholdId,
+            Amount = recurringExpense.Amount,
+            Date = recurringExpense.NextDate,
+            Description = recurringExpense.Description,
+            ExpenseBucketId = recurringExpense.ExpenseBucketId,
+            RecurringExpenseId = recurringExpense.Id
+        };
+        _dbContext.Expenses.Add(newExpense);
+        recurringExpense.NextDate = CalculateNextDate(recurringExpense.NextDate, recurringExpense.Recurrence);
+        await _dbContext.SaveChangesAsync();       
+    }
+    
+    private static DateOnly CalculateNextDate(DateOnly currentDate, RecurrenceType recurrenceType)
+    {
+        return recurrenceType switch
+        {
+            RecurrenceType.Daily     => currentDate.AddDays(1),
+            RecurrenceType.Weekly    => currentDate.AddDays(7),
+            RecurrenceType.BiWeekly  => currentDate.AddDays(14),
+            RecurrenceType.Monthly   => currentDate.AddMonths(1),
+            RecurrenceType.Quarterly => currentDate.AddMonths(3),
+            RecurrenceType.Yearly    => currentDate.AddYears(1),
+            _ => throw new ArgumentOutOfRangeException(nameof(recurrenceType), recurrenceType, "Invalid recurrence type")
+        };
     }
 }
