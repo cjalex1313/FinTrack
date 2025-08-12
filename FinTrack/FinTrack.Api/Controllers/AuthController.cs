@@ -23,7 +23,7 @@ public class AuthController : BaseController
         _authService = authService;
         _identityOptions = identityOptions.Value;
     }
-
+    
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResult>> Login([FromBody] LoginRequest loginRequest)
@@ -99,7 +99,6 @@ public class AuthController : BaseController
         await _authService.ResetPassword(request.UserId, request.Token, request.Password);
         return Ok();
     }
-
 
     [AllowAnonymous]
     [HttpPost(nameof(ExternalLoginCallback))]

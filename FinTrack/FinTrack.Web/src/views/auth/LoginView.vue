@@ -52,10 +52,6 @@
           <Button @click="tryLogin" label="Login" fluid />
         </div>
         <div class="mt-6">
-          <!-- <button @click="signInWithGoogle" class="google-login-btn" fluid>
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
-            Sign in with Google
-          </button> -->
           <GoogleLogin
               :callback="signInWithGoogle"
               prompt
@@ -123,12 +119,9 @@ const tryLogin = async () => {
 }
 
 const signInWithGoogle = async (response) => {
-  debugger
   if (response.credential) {
         const userData = decodeCredential(response.credential);
-        // console.log('User Data:', userData);
         const response2 = await authApi.externalLoginCallback({email: userData["email"], providerKey: userData["sub"]});
-        debugger
         await successfulLogin(response2)
       } else {
         console.error('Google login failed:', response);
@@ -139,7 +132,7 @@ const emailError = computed(() => {
   if (!v$.value.email.$dirty) {
     return ''
   }
-  if (v$.value.email!.required!.$invalid) {
+  if (v$.value.email.required.$invalid) {
     return 'Email is required'
   }
   return ''
@@ -149,7 +142,7 @@ const passwordError = computed(() => {
   if (!v$.value.password.$dirty) {
     return ''
   }
-  if (v$.value.password!.required!.$invalid) {
+  if (v$.value.password.required.$invalid) {
     return 'Password is required'
   }
   return ''

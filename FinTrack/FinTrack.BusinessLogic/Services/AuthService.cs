@@ -18,22 +18,17 @@ public interface IAuthService
 {
     Task<IdentityResult> AddLoginAsync(ApplicationUser user, UserLoginInfo info);
     Task ChangePassword(Guid userId, string oldPassword, string newPassword);
-
     Task<JwtSecurityToken> ConfirmEmail(Guid userId, string token);
     Task EnsureAdminExists();
     Task EnsureRolesExistInDb();
     Task ForgotPassword(string email);
-
     Task<ProfileDTO> GetProfile(Guid userId);
     Task<JwtSecurityToken> Login(string email, string password);
     Task<JwtSecurityToken> Login(ApplicationUser user);
-
     Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey);
     Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
     Task ResetPassword(Guid userId, string token, string password);
-
     Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
-
     Task<bool> UserExists(string email);
 }
 
