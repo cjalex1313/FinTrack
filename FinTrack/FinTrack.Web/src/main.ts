@@ -28,9 +28,6 @@ app.use(PrimeVue, {
   },
 })
 
-// app.use(GoogleLoginPlugin, {
-//   clientId: '432211571385-482i3g0pnqo5h7kcmke8fc9ge9409uts.apps.googleusercontent.com'
-// });
 
 app.use(ToastService)
 app.use(DialogService)

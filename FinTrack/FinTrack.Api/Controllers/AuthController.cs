@@ -1,13 +1,11 @@
 using AcademyOS.Api.Controllers;
 using FinTrack.BusinessLogic.Services;
 using FinTrack.Shared.DTO.Auth;
-using FinTrack.Shared.Entities.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace FinTrack.Api.Controllers;
 
@@ -16,13 +14,14 @@ namespace FinTrack.Api.Controllers;
 public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
-    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IdentityOptions _identityOptions;
 
-    public AuthController(IAuthService authService, SignInManager<ApplicationUser> signInManager, IOptions<IdentityOptions> identityOptions)
+    public AuthController(
+        IAuthService authService,
+        IOptions<IdentityOptions> identityOptions
+    )
     {
         _authService = authService;
-        _signInManager = signInManager;
         _identityOptions = identityOptions.Value;
     }
 
@@ -70,19 +69,7 @@ public class AuthController : BaseController
     }
 
 
-    [HttpGet]
-    public IActionResult ExternalLogin(string provider, string? returnUrl = null)
-    {
-        var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
-        var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-        return Challenge(properties, provider);
-    }
-
-    public class ExternalLoginCallbackRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string ProviderKey { get; set; } = string.Empty;
-    }
+    [AllowAnonymous]
     [HttpPost(nameof(ExternalLoginCallback))]
     public async Task<IActionResult> ExternalLoginCallback([FromBody] ExternalLoginCallbackRequest request)
     {
@@ -90,43 +77,23 @@ public class AuthController : BaseController
         {
             return BadRequest(ModelState);
         }
-        //var user = await _authService.FindByEmailAsync(model.Email);
-        //if (user != null)
-        //    return Conflict("User already exists.");
-
-
-        var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
-        //if (!createResult.Succeeded)
-        //    return BadRequest(createResult.Errors);
-
-        // Link external login
-        var loginInfo = new UserLoginInfo("Google", request.ProviderKey, "Google");
-        var addLoginResult = await _authService.AddLoginAsync(user, loginInfo);
-        if (!addLoginResult.Succeeded)
+        if (!await _authService.UserExists(request.Email))
         {
-            return BadRequest(addLoginResult.Errors);
+            var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
+            var loginInfo = new UserLoginInfo("Google", request.ProviderKey, "Google");
+            var addLoginResult = await _authService.AddLoginAsync(user, loginInfo);
+            if (!addLoginResult.Succeeded)
+            {
+                return BadRequest(addLoginResult.Errors);
+            }
         }
-        return Ok("User registered and linked to external provider.");
-
-        //var info = await _signInManager.GetExternalLoginInfoAsync();
-        ////var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-        ////if (result.Succeeded)
-        ////{
-        ////    return LocalRedirect(returnUrl ?? "/");
-        ////}
-
-        //// If the user does not have an account, create one
-        //var email2 = info.Principal.FindFirstValue(ClaimTypes.Email);
-        //if (email2 != null)
-        //{
-        //    var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) });
-        //    await _authService.AddLoginAsync(user, info);
-        //    await _signInManager.SignInAsync(user, isPersistent: false);
-        //    return Ok();
-        //    //return LocalRedirect(returnUrl ?? "/");
-        //}
-        //return BadRequest("Error loading external login information.");
-        ////return RedirectToAction("Login");
+        var token = await _authService.LoginByProviderKey(request.Email, request.ProviderKey);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var response = new LoginResult()
+        {
+            AccessToken = tokenString,
+        };
+        return Ok(response);
     }
 
 }

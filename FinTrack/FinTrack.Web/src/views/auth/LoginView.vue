@@ -80,7 +80,6 @@ import { required } from '@vuelidate/validators'
 import { computed, reactive } from 'vue'
 import { useAuthApi } from '../../api/authApi'
 import { useAuthStore } from '../../stores/auth'
-// import { googleSdkLoaded } from 'vue3-google-login'
 import { decodeCredential } from 'vue3-google-login'
 
 const router = useRouter()
@@ -103,46 +102,32 @@ const rules = {
 
 const v$ = useVuelidate(rules, authData)
 
+const successfulLogin = async (response) =>{
+  await authStore.setJwt(response.accessToken)
+  router.push({
+    name: 'Home',
+  })
+}
 const tryLogin = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
   const response = await authApi.login(authData.email, authData.password)
-  await authStore.setJwt(response.accessToken)
-  router.push({
-    name: 'Home',
-  })
+  await successfulLogin(response)
 }
 
 const signInWithGoogle = async (response) => {
   debugger
   if (response.credential) {
         const userData = decodeCredential(response.credential);
-        console.log('User Data:', userData);
-        // Here, you can send userData to your backend for registration or
-        // handle user data for client-side registration/login.
-        // Example: Call an API to register the user with their Google details.
-        const p = await authApi.externalLoginCallback({email: userData["email"]})
+        // console.log('User Data:', userData);
+        const response2 = await authApi.externalLoginCallback({email: userData["email"], providerKey: userData["sub"]});
+        debugger
+        await successfulLogin(response2)
       } else {
         console.error('Google login failed:', response);
       }
-  // googleSdkLoaded(google => {
-  //   google.accounts.oauth2
-  //     .initCodeClient({
-  //       client_id: '432211571385-482i3g0pnqo5h7kcmke8fc9ge9409uts.apps.googleusercontent.com',
-  //       scope: 'email profile openid',
-  //       redirect_uri: "http://localhost:5173/auth/signin-oidc",
-  //       callback: (response) => {
-  //         debugger;
-  //         console.log(response)
-  //       //   if (response.code) {
-  //       //     fetchUserDataFrom(response.code)
-  //       // }
-  //     }
-  //   })
-  //     .requestCode()
-  // })
 }
 
 const emailError = computed(() => {
@@ -168,20 +153,7 @@ const passwordError = computed(() => {
 
 
 <style scoped>
-.google-login-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.google-login-btn img {
-  width: 20px;
-  height: 20px;
+.g-btn-wrapper {
+  width: 100%;
 }
 </style>

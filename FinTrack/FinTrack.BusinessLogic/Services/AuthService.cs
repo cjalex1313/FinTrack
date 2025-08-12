@@ -22,7 +22,10 @@ public interface IAuthService
     Task EnsureRolesExistInDb();
     Task<ProfileDTO> GetProfile(Guid userId);
     Task<JwtSecurityToken> Login(string email, string password);
+    Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey);
     Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
+    Task<bool> UserExists(string email);
+    Task<JwtSecurityToken> Login(ApplicationUser user);
 }
 
 public class AuthService : IAuthService
@@ -62,23 +65,7 @@ public class AuthService : IAuthService
                 ErrorMessage = result != null ? string.Join(". ", result.Errors.Select(e => e.Description).ToList()) : "Error while confirming email via confirmation token"
             };
         }
-
-        var authClaims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Iss, _apiConfig.JWTConfig.ValidIssuer)
-        };
-        var userRoles = await _userManager.GetRolesAsync(user);
-        foreach (var role in userRoles)
-        {
-            authClaims.Add(new Claim(ClaimTypes.Role, role));
-        }
-        if (user.Email != null)
-        {
-            authClaims.Add(new Claim(ClaimTypes.Email, user.Email));
-        }
-        var jwtToken = GetToken(authClaims);
-        return jwtToken;
+        return await Login(user);
     }
 
     public async Task EnsureAdminExists()
@@ -135,7 +122,7 @@ public class AuthService : IAuthService
         {
             Id = user.Id,
             Email = user.Email!,
-            Roles = userRoles.ToList()
+            Roles = [.. userRoles]
         };
         return result;
     }
@@ -153,10 +140,15 @@ public class AuthService : IAuthService
             throw new PasswordIncorrectException();
         }
 
+        return await Login(user);
+    }
+
+    public async Task<JwtSecurityToken> Login(ApplicationUser user)
+    {
         var authClaims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Iss, _apiConfig.JWTConfig.ValidIssuer)
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Iss, _apiConfig.JWTConfig.ValidIssuer)
         };
         var userRoles = await _userManager.GetRolesAsync(user);
         foreach (var role in userRoles)
@@ -170,6 +162,18 @@ public class AuthService : IAuthService
         var token = GetToken(authClaims);
         return token;
     }
+
+    public async Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey)
+    {
+        var loginInfo = new UserLoginInfo("Google", providerKey, "Google");
+        var user = await _userManager.FindByLoginAsync(loginInfo.LoginProvider, loginInfo.ProviderKey);
+        if (!(user != null && user.Email == email))
+        {
+            throw new Exception("user not found or email mismatch");
+        }
+        return await Login(user);
+    }
+
     public async Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail)
     {
         var emailExists = (await _userManager.FindByEmailAsync(registerRequest.Email)) != null;
@@ -181,6 +185,12 @@ public class AuthService : IAuthService
         await AddRoleToUser(identityUser, Roles.User);
         return identityUser;
     }
+
+    public async Task<bool> UserExists(string email)
+    {
+        return (await _userManager.FindByEmailAsync(email)) != null;
+    }
+
     private async Task AddRoleToUser(ApplicationUser identityUser, string role)
     {
         var roleResult = await _userManager.AddToRoleAsync(identityUser, role);
