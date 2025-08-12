@@ -5,6 +5,7 @@ using FinTrack.Shared.Entities.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -18,11 +19,11 @@ public class AuthController : BaseController
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IdentityOptions _identityOptions;
 
-    public AuthController(IAuthService authService, SignInManager<ApplicationUser> signInManager, IdentityOptions identityOptions)
+    public AuthController(IAuthService authService, SignInManager<ApplicationUser> signInManager, IOptions<IdentityOptions> identityOptions)
     {
         _authService = authService;
         _signInManager = signInManager;
-        _identityOptions = identityOptions;
+        _identityOptions = identityOptions.Value;
     }
 
     [AllowAnonymous]
@@ -42,7 +43,7 @@ public class AuthController : BaseController
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
-        await _authService.RegisterUser(registerRequest);
+        await _authService.RegisterUser(registerRequest, true);
         return Ok();
     }
 
@@ -77,33 +78,55 @@ public class AuthController : BaseController
         return Challenge(properties, provider);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+    public class ExternalLoginCallbackRequest
     {
-        if (remoteError != null)
-            return RedirectToAction("Login", new { ErrorMessage = $"Error from external provider: {remoteError}" });
-
-        var info = await _signInManager.GetExternalLoginInfoAsync();
-        if (info == null)
-            return RedirectToAction("Login");
-
-        var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
-        if (result.Succeeded)
+        public string Email { get; set; } = string.Empty;
+        public string ProviderKey { get; set; } = string.Empty;
+    }
+    [HttpPost(nameof(ExternalLoginCallback))]
+    public async Task<IActionResult> ExternalLoginCallback([FromBody] ExternalLoginCallbackRequest request)
+    {
+        if (!ModelState.IsValid)
         {
-            return LocalRedirect(returnUrl ?? "/");
+            return BadRequest(ModelState);
         }
+        //var user = await _authService.FindByEmailAsync(model.Email);
+        //if (user != null)
+        //    return Conflict("User already exists.");
 
-        // If the user does not have an account, create one
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-        if (email != null)
+
+        var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
+        //if (!createResult.Succeeded)
+        //    return BadRequest(createResult.Errors);
+
+        // Link external login
+        var loginInfo = new UserLoginInfo("Google", request.ProviderKey, "Google");
+        var addLoginResult = await _authService.AddLoginAsync(user, loginInfo);
+        if (!addLoginResult.Succeeded)
         {
-            var user = await _authService.RegisterUser(new RegisterRequest { Email = email, Password = PasswordGenerator.GeneratePassword(_identityOptions) });
-            await _authService.AddLoginAsync(user, info);
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return LocalRedirect(returnUrl ?? "/");
+            return BadRequest(addLoginResult.Errors);
         }
+        return Ok("User registered and linked to external provider.");
 
-        return RedirectToAction("Login");
+        //var info = await _signInManager.GetExternalLoginInfoAsync();
+        ////var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+        ////if (result.Succeeded)
+        ////{
+        ////    return LocalRedirect(returnUrl ?? "/");
+        ////}
+
+        //// If the user does not have an account, create one
+        //var email2 = info.Principal.FindFirstValue(ClaimTypes.Email);
+        //if (email2 != null)
+        //{
+        //    var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) });
+        //    await _authService.AddLoginAsync(user, info);
+        //    await _signInManager.SignInAsync(user, isPersistent: false);
+        //    return Ok();
+        //    //return LocalRedirect(returnUrl ?? "/");
+        //}
+        //return BadRequest("Error loading external login information.");
+        ////return RedirectToAction("Login");
     }
 
 }

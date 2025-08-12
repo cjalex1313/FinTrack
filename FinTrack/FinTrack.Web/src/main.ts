@@ -9,8 +9,15 @@ import Aura from '@primeuix/themes/aura'
 import App from './App.vue'
 import router from './router'
 import { ConfirmationService, DialogService, ToastService } from 'primevue'
+import vue3GoogleLogin from 'vue3-google-login'
+
+
 
 const app = createApp(App)
+
+app.use(vue3GoogleLogin, {
+  clientId: '432211571385-482i3g0pnqo5h7kcmke8fc9ge9409uts.apps.googleusercontent.com'
+})
 
 app.use(PrimeVue, {
   theme: {
@@ -20,6 +27,11 @@ app.use(PrimeVue, {
     },
   },
 })
+
+// app.use(GoogleLoginPlugin, {
+//   clientId: '432211571385-482i3g0pnqo5h7kcmke8fc9ge9409uts.apps.googleusercontent.com'
+// });
+
 app.use(ToastService)
 app.use(DialogService)
 app.use(ConfirmationService)

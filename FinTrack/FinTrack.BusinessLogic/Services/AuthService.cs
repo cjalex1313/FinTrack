@@ -22,7 +22,7 @@ public interface IAuthService
     Task EnsureRolesExistInDb();
     Task<ProfileDTO> GetProfile(Guid userId);
     Task<JwtSecurityToken> Login(string email, string password);
-    Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest);
+    Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
 }
 
 public class AuthService : IAuthService
@@ -31,7 +31,6 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IdentityOptions _identityOptions;
 
     public AuthService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService, ApiConfig apiConfig)
     {
@@ -60,7 +59,7 @@ public class AuthService : IAuthService
             throw new BaseException()
             {
                 StatusCode = (int)HttpStatusCode.BadRequest,
-                ErrorMessage = result != null ? String.Join(". ", result.Errors.Select(e => e.Description).ToList()) : "Error while confirming email via confirmation token"
+                ErrorMessage = result != null ? string.Join(". ", result.Errors.Select(e => e.Description).ToList()) : "Error while confirming email via confirmation token"
             };
         }
 
@@ -85,11 +84,11 @@ public class AuthService : IAuthService
     public async Task EnsureAdminExists()
     {
         var adminEmail = _apiConfig.AdminConfig.Email;
-        var adminPassowrd = _apiConfig.AdminConfig.Password;
+        var adminPassword = _apiConfig.AdminConfig.Password;
         var admin = await _userManager.FindByNameAsync("admin");
         if (admin == null)
         {
-            var identityAdmin = await AddUser("admin", adminEmail, adminPassowrd);
+            var identityAdmin = await AddUser("admin", adminEmail, adminPassword, true);
             await AddRoleToUser(identityAdmin, Roles.Admin);
         }
         else
@@ -98,7 +97,7 @@ public class AuthService : IAuthService
             admin.EmailConfirmed = true;
             await _userManager.UpdateAsync(admin);
             var token = await _userManager.GeneratePasswordResetTokenAsync(admin);
-            var result = await _userManager.ResetPasswordAsync(admin, token, adminPassowrd);
+            var result = await _userManager.ResetPasswordAsync(admin, token, adminPassword);
             if (!result.Succeeded)
             {
                 throw new BaseException("Error while setting admin password");
@@ -171,14 +170,14 @@ public class AuthService : IAuthService
         var token = GetToken(authClaims);
         return token;
     }
-    public async Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest)
+    public async Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail)
     {
         var emailExists = (await _userManager.FindByEmailAsync(registerRequest.Email)) != null;
         if (emailExists)
         {
             throw new EmailAlreadyExistsException(registerRequest.Email);
         }
-        var identityUser = await AddUser(registerRequest.Email, registerRequest.Email, registerRequest.Password);
+        var identityUser = await AddUser(registerRequest.Email, registerRequest.Email, registerRequest.Password, sendConfirmationEmail);
         await AddRoleToUser(identityUser, Roles.User);
         return identityUser;
     }
@@ -191,7 +190,7 @@ public class AuthService : IAuthService
         }
     }
 
-    private async Task<ApplicationUser> AddUser(string username, string email, string password)
+    private async Task<ApplicationUser> AddUser(string username, string email, string password, bool sendConfirmationEmail)
     {
         var identityUser = new ApplicationUser()
         {
@@ -208,16 +207,19 @@ public class AuthService : IAuthService
 
         if (username == "admin") return identityUser;
 
-        var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
-        var encodedToken = Uri.EscapeDataString(confirmationToken);
-        _emailService.SendEmail(new Email.Models.MailData
+        if (sendConfirmationEmail)
         {
-            Email = email,
-            Name = username,
-            Subject = "Email confirmation",
-            Body =
-                $"Welcome to FinTrack. Click <a href=\"{_apiConfig.EmailConfirmationUrl + "?userId=" + identityUser.Id + "&token=" + encodedToken}\">here</a> to confirm your email"
-        }, MimeKit.Text.TextFormat.Html);
+            var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+            var encodedToken = Uri.EscapeDataString(confirmationToken);
+            _emailService.SendEmail(new Email.Models.MailData
+            {
+                Email = email,
+                Name = username,
+                Subject = "Email confirmation",
+                Body =
+                    $"Welcome to FinTrack. Click <a href=\"{_apiConfig.EmailConfirmationUrl + "?userId=" + identityUser.Id + "&token=" + encodedToken}\">here</a> to confirm your email"
+            }, MimeKit.Text.TextFormat.Html);
+        }
         return identityUser;
     }
 

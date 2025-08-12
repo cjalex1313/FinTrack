@@ -51,6 +51,16 @@
         <div class="mt-6">
           <Button @click="tryLogin" label="Login" fluid />
         </div>
+        <div class="mt-6">
+          <!-- <button @click="signInWithGoogle" class="google-login-btn" fluid>
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" />
+            Sign in with Google
+          </button> -->
+          <GoogleLogin
+              :callback="signInWithGoogle"
+              prompt
+            />
+        </div>
         <div class="text-center mt-3">
           Don't have an account?
           <RouterLink class="hover:underline text-[#3bbfa1]" :to="{ name: 'Register' }">
@@ -69,7 +79,9 @@ import { useVuelidate } from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
 import { computed, reactive } from 'vue'
 import { useAuthApi } from '../../api/authApi'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '../../stores/auth'
+// import { googleSdkLoaded } from 'vue3-google-login'
+import { decodeCredential } from 'vue3-google-login'
 
 const router = useRouter()
 const authApi = useAuthApi()
@@ -103,11 +115,41 @@ const tryLogin = async () => {
   })
 }
 
+const signInWithGoogle = async (response) => {
+  debugger
+  if (response.credential) {
+        const userData = decodeCredential(response.credential);
+        console.log('User Data:', userData);
+        // Here, you can send userData to your backend for registration or
+        // handle user data for client-side registration/login.
+        // Example: Call an API to register the user with their Google details.
+        const p = await authApi.externalLoginCallback({email: userData["email"]})
+      } else {
+        console.error('Google login failed:', response);
+      }
+  // googleSdkLoaded(google => {
+  //   google.accounts.oauth2
+  //     .initCodeClient({
+  //       client_id: '432211571385-482i3g0pnqo5h7kcmke8fc9ge9409uts.apps.googleusercontent.com',
+  //       scope: 'email profile openid',
+  //       redirect_uri: "http://localhost:5173/auth/signin-oidc",
+  //       callback: (response) => {
+  //         debugger;
+  //         console.log(response)
+  //       //   if (response.code) {
+  //       //     fetchUserDataFrom(response.code)
+  //       // }
+  //     }
+  //   })
+  //     .requestCode()
+  // })
+}
+
 const emailError = computed(() => {
   if (!v$.value.email.$dirty) {
     return ''
   }
-  if (v$.value.email.required.$invalid) {
+  if (v$.value.email!.required!.$invalid) {
     return 'Email is required'
   }
   return ''
@@ -117,9 +159,29 @@ const passwordError = computed(() => {
   if (!v$.value.password.$dirty) {
     return ''
   }
-  if (v$.value.password.required.$invalid) {
+  if (v$.value.password!.required!.$invalid) {
     return 'Password is required'
   }
   return ''
 })
 </script>
+
+
+<style scoped>
+.google-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.google-login-btn img {
+  width: 20px;
+  height: 20px;
+}
+</style>
