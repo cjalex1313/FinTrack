@@ -14,12 +14,12 @@ public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
     private readonly IdentityOptions _identityOptions;
-    private readonly GoogleJwtValidator _googleValidator;
+    private readonly GoogleJwtValidator? _googleValidator;
 
     public AuthController(
         IAuthService authService,
         IOptions<IdentityOptions> identityOptions,
-        GoogleJwtValidator googleValidator
+        GoogleJwtValidator? googleValidator
     )
     {
         _authService = authService;
@@ -110,6 +110,11 @@ public class AuthController : BaseController
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
+        }
+
+        if (_googleValidator == null)
+        {
+            return BadRequest("Google authentication is not configured");       
         }
         var payload = await _googleValidator.ValidateGoogleTokenAsync(request.Credential);
         if (!payload.IsValid)

@@ -6,15 +6,13 @@ namespace FinTrack.BusinessLogic.Services.Auth
 
     public class GoogleJwtValidator(string clientId)
     {
-        private readonly string _clientId = clientId;
-
         public async Task<ValidateGoogleTokenResult> ValidateGoogleTokenAsync(string idToken)
         {
             try
             {
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
-                    Audience = [_clientId]
+                    Audience = [clientId]
                 };
 
                 var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
