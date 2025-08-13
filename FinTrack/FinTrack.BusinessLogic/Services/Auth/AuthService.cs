@@ -12,7 +12,7 @@ using FinTrack.Shared.Exceptions.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
-namespace FinTrack.BusinessLogic.Services;
+namespace FinTrack.BusinessLogic.Services.Auth;
 
 public interface IAuthService
 {
@@ -23,17 +23,23 @@ public interface IAuthService
     Task EnsureRolesExistInDb();
     Task ForgotPassword(string email);
     Task<ProfileDTO> GetProfile(Guid userId);
+    Task<ApplicationUser?> GetUserByEmail(string email);
+    Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName);
     Task<JwtSecurityToken> Login(string email, string password);
     Task<JwtSecurityToken> Login(ApplicationUser user);
     Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey);
     Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
     Task ResetPassword(Guid userId, string token, string password);
     Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
-    Task<bool> UserExists(string email);
 }
 
 public class AuthService : IAuthService
 {
+    public static class ProviderNames
+    {
+        public static string Google { get; } = "Google";
+    }
+
     private readonly ApiConfig _apiConfig;
     private readonly IEmailService _emailService;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
@@ -127,7 +133,6 @@ public class AuthService : IAuthService
             await _roleManager.CreateAsync(new IdentityRole<Guid>(Roles.User));
         }
     }
-
     public async Task ForgotPassword(string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
@@ -141,7 +146,7 @@ public class AuthService : IAuthService
         _emailService.SendEmail(new Email.Models.MailData
         {
             Email = email,
-            Name = (user.FirstName != null || user.LastName != null) ? $"{user.FirstName} {user.LastName}".Trim() : email,
+            Name = user.FirstName != null || user.LastName != null ? $"{user.FirstName} {user.LastName}".Trim() : email,
             Subject = "Password reset",
             Body = $"Forgot your password? We got you. Click <a href=\"{_apiConfig.ForgotPasswordUrl + "?userId=" + user.Id + "&resetToken=" + encodedToken}\">here</a> to reset your password"
         }, MimeKit.Text.TextFormat.Html);
@@ -162,6 +167,20 @@ public class AuthService : IAuthService
             Roles = [.. userRoles]
         };
         return result;
+    }
+
+    public async Task<ApplicationUser?> GetUserByEmail(string email)
+    {
+        return await _userManager.FindByEmailAsync(email);
+    }
+
+    public async Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName)
+    {
+        if (user == null) return false;
+        if (string.IsNullOrWhiteSpace(providerName)) return false;
+
+        var logins = await _userManager.GetLoginsAsync(user);
+        return logins.Any(login => login.LoginProvider == providerName);
     }
 
     public async Task<JwtSecurityToken> Login(string email, string password)
@@ -213,7 +232,7 @@ public class AuthService : IAuthService
 
     public async Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail)
     {
-        var emailExists = (await _userManager.FindByEmailAsync(registerRequest.Email)) != null;
+        var emailExists = await _userManager.FindByEmailAsync(registerRequest.Email) != null;
         if (emailExists)
         {
             throw new EmailAlreadyExistsException(registerRequest.Email);
@@ -254,10 +273,6 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<bool> UserExists(string email)
-    {
-        return (await _userManager.FindByEmailAsync(email)) != null;
-    }
     private async Task AddRoleToUser(ApplicationUser identityUser, string role)
     {
         var roleResult = await _userManager.AddToRoleAsync(identityUser, role);

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Text;
 
-namespace FinTrack.BusinessLogic.Services
+namespace FinTrack.BusinessLogic.Services.Auth
 {
     public static class PasswordGenerator
     {

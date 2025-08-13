@@ -120,9 +120,8 @@ const tryLogin = async () => {
 
 const signInWithGoogle = async (response) => {
   if (response.credential) {
-        const userData = decodeCredential(response.credential);
-        const response2 = await authApi.externalLoginCallback({email: userData["email"], providerKey: userData["sub"]});
-        await successfulLogin(response2)
+        const authResponse = await authApi.externalLoginCallback({credential: response.credential});
+        await successfulLogin(authResponse)
       } else {
         console.error('Google login failed:', response);
       }

@@ -1,4 +1,4 @@
-using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.Shared.DTO.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,16 +14,19 @@ public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
     private readonly IdentityOptions _identityOptions;
+    private readonly GoogleJwtValidator _googleValidator;
 
     public AuthController(
         IAuthService authService,
-        IOptions<IdentityOptions> identityOptions
+        IOptions<IdentityOptions> identityOptions,
+        GoogleJwtValidator googleValidator
     )
     {
         _authService = authService;
         _identityOptions = identityOptions.Value;
+        _googleValidator = googleValidator;
     }
-    
+
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResult>> Login([FromBody] LoginRequest loginRequest)
@@ -108,17 +111,31 @@ public class AuthController : BaseController
         {
             return BadRequest(ModelState);
         }
-        if (!await _authService.UserExists(request.Email))
+        var payload = await _googleValidator.ValidateGoogleTokenAsync(request.Credential);
+        if (!payload.IsValid)
         {
-            var user = await _authService.RegisterUser(new RegisterRequest { Email = request.Email, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
-            var loginInfo = new UserLoginInfo("Google", request.ProviderKey, "Google");
+            return BadRequest("Invalid token");
+        }
+        var linkedToProvider = false;
+        var user = await _authService.GetUserByEmail(payload.Email!);
+        if (user == null)
+        {
+            user = await _authService.RegisterUser(new RegisterRequest { Email = payload.Email!, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
+        }
+        else
+        {
+            linkedToProvider = await _authService.IsUserLinkedWithProvider(user, AuthService.ProviderNames.Google);
+        }
+        if (!linkedToProvider)
+        {
+            var loginInfo = new UserLoginInfo(AuthService.ProviderNames.Google, payload.Subject!, AuthService.ProviderNames.Google);
             var addLoginResult = await _authService.AddLoginAsync(user, loginInfo);
             if (!addLoginResult.Succeeded)
             {
                 return BadRequest(addLoginResult.Errors);
             }
         }
-        var token = await _authService.LoginByProviderKey(request.Email, request.ProviderKey);
+        var token = await _authService.LoginByProviderKey(payload.Email!, payload.Subject!);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         var response = new LoginResult()
         {

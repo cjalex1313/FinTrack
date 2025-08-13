@@ -1,4 +1,5 @@
 ﻿using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.DataAccess;
 using FinTrack.Email;
 using Microsoft.Extensions.Configuration;
@@ -17,5 +18,6 @@ public static class BusinessLogicModuleExtension
         services.AddScoped<IIncomeService, IncomeService>();
         services.AddScoped<ISetupService, SetupService>();
         services.AddScoped<IExpenseService, ExpenseService>();
+        services.AddScoped(sp=> new GoogleJwtValidator(configuration.GetValue<string>("ApiConfig:Authentication:Google:ClientId")!));
     }
 }

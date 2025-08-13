@@ -4,7 +4,7 @@ using FinTrack.Api.Background;
 using FinTrack.Api.Background.Filters;
 using FinTrack.Api.Middleware;
 using FinTrack.BusinessLogic;
-using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.DataAccess;
 using FinTrack.Shared.Config;
 using FinTrack.Shared.Entities.Auth;
