@@ -9,17 +9,10 @@ public class AdminConfig
 public class ApiConfig
 {
     public required AdminConfig AdminConfig { get; set; }
-    //public required AuthenticationConfig Authentication { get; set; }
     public required string EmailConfirmationUrl { get; set; }
     public required string ForgotPasswordUrl { get; set; }
     public required JwtConfig JWTConfig { get; set; }
 }
-
-//public class AuthenticationConfig
-//{
-//    public required AuthenticationGoogleConfig Google { get; set; }
-//}
-
 
 public class JwtConfig
 {

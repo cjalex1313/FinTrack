@@ -93,13 +93,7 @@ authenticationBuilder.AddJwtBearer(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
 });
-//if (apiConfig.Authentication.Google.Enabled) {
-//    authenticationBuilder.AddGoogle(options =>
-//    {
-//        options.ClientId = apiConfig.Authentication.Google.ClientId;
-//        options.ClientSecret = apiConfig.Authentication.Google.ClientSecret;
-//    });
-//}
+
 
 // Hangfire
 // Register Hangfire with in-memory storage:
