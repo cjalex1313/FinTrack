@@ -118,7 +118,7 @@ const tryLogin = async () => {
   await successfulLogin(response)
 }
 
-const signInWithGoogle = async (response) => {
+const signInWithGoogle = async (response: any) => {
   if (response.credential) {
         const userData = decodeCredential(response.credential);
         const response2 = await authApi.externalLoginCallback({email: userData["email"], providerKey: userData["sub"]});
