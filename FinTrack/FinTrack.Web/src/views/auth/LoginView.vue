@@ -118,7 +118,7 @@ const tryLogin = async () => {
   await successfulLogin(response)
 }
 
-const signInWithGoogle = async (response) => {
+const signInWithGoogle = async (response: any) => {
   if (response.credential) {
         const authResponse = await authApi.externalLoginCallback({credential: response.credential});
         await successfulLogin(authResponse)
