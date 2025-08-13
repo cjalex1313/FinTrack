@@ -1,4 +1,5 @@
 ﻿using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.DataAccess;
 using FinTrack.Email;
 using Microsoft.Extensions.Configuration;
@@ -17,5 +18,14 @@ public static class BusinessLogicModuleExtension
         services.AddScoped<IIncomeService, IncomeService>();
         services.AddScoped<ISetupService, SetupService>();
         services.AddScoped<IExpenseService, ExpenseService>();
+        if(configuration.GetValue<bool>("ApiConfig:Authentication:Google:Enabled"))
+        {
+            var clientId = configuration.GetValue<string>("ApiConfig:Authentication:Google:ClientId");
+            if (clientId == null)
+            {
+                throw new Exception("Error - incorrect google config - unable to map google config");
+            }
+            services.AddScoped(sp=> new GoogleJwtValidator(clientId));
+        }
     }
 }

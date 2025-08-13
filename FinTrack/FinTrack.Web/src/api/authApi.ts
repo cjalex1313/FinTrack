@@ -59,6 +59,11 @@ export function useAuthApi() {
     return response.data
   }
 
+  const externalLoginCallback = async (userData) => {
+    const response = await baseApi.post<LoginResponse>('api/auth/ExternalLoginCallback', userData)
+    return response.data
+  }
+
   return {
     login,
     getProfile,
@@ -68,5 +73,6 @@ export function useAuthApi() {
     resetPassword,
     changePassword,
     updateProfileNames,
+    externalLoginCallback
   }
 }

@@ -51,6 +51,12 @@
         <div class="mt-6">
           <Button @click="tryLogin" label="Login" fluid />
         </div>
+        <div class="mt-6">
+          <GoogleLogin
+              :callback="signInWithGoogle"
+              prompt
+            />
+        </div>
         <div class="text-center mt-3">
           Don't have an account?
           <RouterLink class="hover:underline text-[#3bbfa1]" :to="{ name: 'Register' }">
@@ -74,7 +80,8 @@ import { useVuelidate } from '@vuelidate/core'
 import { required } from '@vuelidate/validators'
 import { computed, reactive } from 'vue'
 import { useAuthApi } from '../../api/authApi'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '../../stores/auth'
+import { decodeCredential } from 'vue3-google-login'
 
 const router = useRouter()
 const authApi = useAuthApi()
@@ -96,16 +103,28 @@ const rules = {
 
 const v$ = useVuelidate(rules, authData)
 
+const successfulLogin = async (response) =>{
+  await authStore.setJwt(response.accessToken)
+  router.push({
+    name: 'Home',
+  })
+}
 const tryLogin = async () => {
   v$.value.$touch()
   if (v$.value.$invalid) {
     return
   }
   const response = await authApi.login(authData.email, authData.password)
-  await authStore.setJwt(response.accessToken)
-  router.push({
-    name: 'Home',
-  })
+  await successfulLogin(response)
+}
+
+const signInWithGoogle = async (response: any) => {
+  if (response.credential) {
+        const authResponse = await authApi.externalLoginCallback({credential: response.credential});
+        await successfulLogin(authResponse)
+      } else {
+        console.error('Google login failed:', response);
+      }
 }
 
 const emailError = computed(() => {
@@ -128,3 +147,10 @@ const passwordError = computed(() => {
   return ''
 })
 </script>
+
+
+<style scoped>
+.g-btn-wrapper {
+  width: 100%;
+}
+</style>

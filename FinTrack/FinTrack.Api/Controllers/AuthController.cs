@@ -1,9 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
-using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.Shared.DTO.Auth;
-using FinTrack.Shared.Exceptions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FinTrack.Api.Controllers;
 
@@ -12,19 +13,27 @@ namespace FinTrack.Api.Controllers;
 public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
+    private readonly IdentityOptions _identityOptions;
+    private readonly GoogleJwtValidator? _googleValidator;
 
-    public AuthController(IAuthService authService)
+    public AuthController(
+        IAuthService authService,
+        IOptions<IdentityOptions> identityOptions,
+        GoogleJwtValidator? googleValidator
+    )
     {
-        this._authService = authService;
+        _authService = authService;
+        _identityOptions = identityOptions.Value;
+        _googleValidator = googleValidator;
     }
-    
+
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResult>> Login([FromBody] LoginRequest loginRequest)
     {
         var token = await _authService.Login(loginRequest.Email, loginRequest.Password);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        LoginResult response = new LoginResult()
+        var response = new LoginResult()
         {
             AccessToken = tokenString,
         };
@@ -35,7 +44,7 @@ public class AuthController : BaseController
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
-        await _authService.RegisterUser(registerRequest);
+        await _authService.RegisterUser(registerRequest, true);
         return Ok();
     }
 
@@ -43,9 +52,9 @@ public class AuthController : BaseController
     [HttpPatch("confirm-email")]
     public async Task<ActionResult<LoginResult>> ConfirmEmail([FromBody] EmailValidationRequest emailValidationRequest)
     {
-        var token = await this._authService.ConfirmEmail(emailValidationRequest.UserId, emailValidationRequest.Token);
+        var token = await _authService.ConfirmEmail(emailValidationRequest.UserId, emailValidationRequest.Token);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        LoginResult response = new LoginResult()
+        var response = new LoginResult()
         {
             AccessToken = tokenString,
         };
@@ -57,7 +66,7 @@ public class AuthController : BaseController
     public async Task<ActionResult<ProfileDTO>> GetProfile()
     {
         var userId = GetUserId();
-        ProfileDTO result = await _authService.GetProfile(userId);
+        var result = await _authService.GetProfile(userId);
         return Ok(result);
     }
 
@@ -93,4 +102,51 @@ public class AuthController : BaseController
         await _authService.ResetPassword(request.UserId, request.Token, request.Password);
         return Ok();
     }
+
+    [AllowAnonymous]
+    [HttpPost(nameof(ExternalLoginCallback))]
+    public async Task<IActionResult> ExternalLoginCallback([FromBody] ExternalLoginCallbackRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (_googleValidator == null)
+        {
+            return BadRequest("Google authentication is not configured");       
+        }
+        var payload = await _googleValidator.ValidateGoogleTokenAsync(request.Credential);
+        if (!payload.IsValid)
+        {
+            return BadRequest("Invalid token");
+        }
+        var linkedToProvider = false;
+        var user = await _authService.GetUserByEmail(payload.Email!);
+        if (user == null)
+        {
+            user = await _authService.RegisterUser(new RegisterRequest { Email = payload.Email!, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
+        }
+        else
+        {
+            linkedToProvider = await _authService.IsUserLinkedWithProvider(user, AuthService.ProviderNames.Google);
+        }
+        if (!linkedToProvider)
+        {
+            var loginInfo = new UserLoginInfo(AuthService.ProviderNames.Google, payload.Subject!, AuthService.ProviderNames.Google);
+            var addLoginResult = await _authService.AddLoginAsync(user, loginInfo);
+            if (!addLoginResult.Succeeded)
+            {
+                return BadRequest(addLoginResult.Errors);
+            }
+        }
+        var token = await _authService.LoginByProviderKey(payload.Email!, payload.Subject!);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var response = new LoginResult()
+        {
+            AccessToken = tokenString,
+        };
+        return Ok(response);
+    }
+
 }
