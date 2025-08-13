@@ -163,6 +163,8 @@ public class AuthService : IAuthService
         var result = new ProfileDTO()
         {
             Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
             Email = user.Email!,
             Roles = [.. userRoles]
         };
