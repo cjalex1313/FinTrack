@@ -289,7 +289,7 @@ public class AuthService : IAuthService
             UserName = username,
             Email = email,
             SecurityStamp = Guid.NewGuid().ToString(),
-            EmailConfirmed = username == "admin"
+            EmailConfirmed = username == "admin" || !sendConfirmationEmail
         };
         var result = await _userManager.CreateAsync(identityUser, password);
         if (!result.Succeeded)
