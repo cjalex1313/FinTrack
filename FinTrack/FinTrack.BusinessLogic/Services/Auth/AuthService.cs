@@ -23,7 +23,6 @@ public interface IAuthService
     Task EnsureRolesExistInDb();
     Task ForgotPassword(string email);
     Task<ProfileDTO> GetProfile(Guid userId);
-    Task<ApplicationUser?> GetUserByEmail(string email);
     Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName);
     Task<JwtSecurityToken> Login(string email, string password);
     Task<JwtSecurityToken> Login(ApplicationUser user);
@@ -172,11 +171,6 @@ public class AuthService : IAuthService
             Roles = [.. userRoles]
         };
         return result;
-    }
-
-    public async Task<ApplicationUser?> GetUserByEmail(string email)
-    {
-        return await _userManager.FindByEmailAsync(email);
     }
 
     public async Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName)

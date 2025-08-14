@@ -132,7 +132,7 @@ public class AuthController : BaseController
             return BadRequest("Invalid token");
         }
         var linkedToProvider = false;
-        var user = await _authService.GetUserByEmail(payload.Email!);
+        var user = await _authService.GetUserByEmail(payload.Email);
         if (user == null)
         {
             user = await _authService.RegisterUser(new RegisterRequest { Email = payload.Email!, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);

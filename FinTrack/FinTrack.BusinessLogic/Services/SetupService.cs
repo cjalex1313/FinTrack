@@ -1,4 +1,5 @@
-﻿using FinTrack.DataAccess;
+﻿using FinTrack.BusinessLogic.Services.Auth;
+using FinTrack.DataAccess;
 using FinTrack.Shared.DTO.Setup;
 
 namespace FinTrack.BusinessLogic.Services;
