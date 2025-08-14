@@ -63,6 +63,11 @@ export function useAuthApi() {
     await baseApi.patch<void>('api/auth/set-password', { password })
   }
 
+  const externalLoginCallback = async (userData) => {
+    const response = await baseApi.post<LoginResponse>('api/auth/ExternalLoginCallback', userData)
+    return response.data
+  }
+
   return {
     login,
     getProfile,
@@ -73,5 +78,6 @@ export function useAuthApi() {
     changePassword,
     updateProfileNames,
     setPassword,
+    externalLoginCallback,
   }
 }

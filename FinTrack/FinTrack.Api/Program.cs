@@ -4,7 +4,7 @@ using FinTrack.Api.Background;
 using FinTrack.Api.Background.Filters;
 using FinTrack.Api.Middleware;
 using FinTrack.BusinessLogic;
-using FinTrack.BusinessLogic.Services;
+using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.DataAccess;
 using FinTrack.Shared.Config;
 using FinTrack.Shared.Entities.Auth;
@@ -46,15 +46,34 @@ builder.Services
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddBusinessLogic(builder.Configuration);
-builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>().AddEntityFrameworkStores<FinDbContext>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options => { 
+        // Password settings
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequiredUniqueChars = 1;
+
+        // Lockout settings
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
+
+        // User settings
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<FinDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication(options =>
+var authenticationBuilder = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+});
+
+authenticationBuilder.AddJwtBearer(options =>
 {
     options.SaveToken = false;
     options.RequireHttpsMetadata = false;
@@ -75,16 +94,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    // Default Password settings.
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequiredLength = 6;
-    options.Password.RequiredUniqueChars = 1;
-});
 
 // Hangfire
 // Register Hangfire with in-memory storage:
