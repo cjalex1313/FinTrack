@@ -19,6 +19,6 @@ internal static class HouseholdMappings
         entity.HasKey(e => new {e.HouseholdId, e.UserId});
         entity.Property(e => e.CreatedAt).HasDefaultValueSql("timezone('utc', now())").ValueGeneratedOnAdd();
         entity.HasOne(e => e.Household).WithMany().HasForeignKey(e => e.HouseholdId).OnDelete(DeleteBehavior.Cascade);
-        entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -474,6 +474,7 @@
               icon="pi pi-check"
               iconPos="right"
               severity="success"
+              :disabled="isCompleteDisabled"
               @click="completeSetup"
               class="w-full sm:w-auto order-1 sm:order-2"
             />
@@ -481,11 +482,51 @@
         </StepPanel>
       </StepPanels>
     </Stepper>
+
+    <!-- Pending Invites Section -->
+    <div v-if="pendingInvites.length > 0" class="mt-8 sm:mt-12">
+      <div class="border-t border-gray-200 pt-6 sm:pt-8">
+        <div class="text-center mb-4 sm:mb-6">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+            Or Join an Existing Household
+          </h2>
+          <p class="text-sm sm:text-base text-gray-600">
+            You have pending invitations to join these households
+          </p>
+        </div>
+
+        <div class="space-y-3 sm:space-y-4">
+          <div
+            v-for="invite in pendingInvites"
+            :key="invite.householdId"
+            class="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-lg space-y-3 sm:space-y-0"
+          >
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-1">
+                <i class="pi pi-home text-blue-600"></i>
+                <h3 class="font-medium text-gray-900 text-sm sm:text-base">
+                  {{ invite.householdName }}
+                </h3>
+              </div>
+            </div>
+            <div class="flex space-x-2 self-end sm:self-auto">
+              <Button
+                label="Join Household"
+                icon="pi pi-check"
+                severity="info"
+                @click="joinHousehold(invite)"
+                class="w-full sm:w-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import Stepper from 'primevue/stepper'
 import StepList from 'primevue/steplist'
 import Step from 'primevue/step'
@@ -501,12 +542,14 @@ import {
   type RecurringIncomeDTO,
   type ExpenseBucketDTO,
   type HouseholdInviteDTO,
+  type HouseholdMemberDTO,
 } from '@/api/models'
 import { RecurrenceType } from '@/models/recurrenceType'
 import { useHouseholdApi } from '@/api/householdApi'
 import { useDeviceType } from '@/composables/useDeviceType'
+import { useToast } from 'primevue/usetoast'
 
-const houstholdApi = useHouseholdApi()
+const householdApi = useHouseholdApi()
 const { isMobile } = useDeviceType()
 
 const emit = defineEmits<{
@@ -519,6 +562,8 @@ const household = ref<HouseholdDTO>({
   id: EMPTY_GUID,
   name: '',
 })
+const pendingInvites = ref<HouseholdMemberDTO[]>([])
+const isCompleteDisabled = ref<boolean>(false)
 
 // Recurring Income Management
 const recurringIncomes = ref<RecurringIncomeDTO[]>([])
@@ -559,6 +604,10 @@ const recurrenceOptions = [
   { label: 'Quarterly', value: RecurrenceType.Quarterly },
   { label: 'Yearly', value: RecurrenceType.Yearly },
 ]
+
+onMounted(async () => {
+  pendingInvites.value = await householdApi.getPendingHouseholdInvites()
+})
 
 const isIncomeValid = computed(() => {
   return (
@@ -800,15 +849,42 @@ const prevStep = () => {
 }
 
 const completeSetup = async () => {
-  const setupDto: SetupDTO = {
-    household: household.value,
-    recurringIncomes: recurringIncomes.value,
-    expenseBuckets: expenseBuckets.value,
-    invites: invites.value,
-  }
-  await houstholdApi.setupHousehold(setupDto)
+  try {
+    isCompleteDisabled.value = true
+    const setupDto: SetupDTO = {
+      household: household.value,
+      recurringIncomes: recurringIncomes.value,
+      expenseBuckets: expenseBuckets.value,
+      invites: invites.value,
+    }
+    await householdApi.setupHousehold(setupDto)
 
-  emit('completed')
+    emit('completed')
+  } finally {
+    isCompleteDisabled.value = false
+  }
+}
+
+const toast = useToast()
+
+const joinHousehold = async (invite: HouseholdMemberDTO) => {
+  try {
+    await householdApi.acceptInvite(invite.householdId)
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `You have joined ${invite.householdName}`,
+      life: 3000,
+    })
+    emit('completed')
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to join household. Please try again.',
+      life: 3000,
+    })
+  }
 }
 </script>
 

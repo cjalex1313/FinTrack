@@ -1,5 +1,5 @@
 import type { RecurrenceType } from '@/models/recurrenceType'
-import type { Role } from '@/models/role'
+import type { HouseholdMemberRole, HouseholdMemberStatus, Role } from '@/models/role'
 
 export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
 
@@ -107,4 +107,14 @@ export interface RecurringExpenseDTO {
 export interface HouseholdInviteDTO {
   householdId: string
   email: string
+}
+
+export interface HouseholdMemberDTO {
+  householdId: string
+  householdName: string
+  userEmail: string
+  userFirstName: string | null
+  userLastName: string | null
+  role: HouseholdMemberRole
+  status: HouseholdMemberStatus
 }

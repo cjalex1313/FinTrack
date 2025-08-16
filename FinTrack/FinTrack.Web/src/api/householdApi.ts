@@ -1,11 +1,11 @@
 import { useBaseApi } from './baseApi'
-import type { HouseholdDTO, SetupDTO } from './models'
+import type { HouseholdDTO, HouseholdMemberDTO, SetupDTO } from './models'
 
 export function useHouseholdApi() {
   const { baseApi } = useBaseApi()
 
   const getHouseholds = async () => {
-    const response = await baseApi.get<HouseholdDTO[]>('api/household')
+    const response = await baseApi.get<HouseholdMemberDTO[]>('api/household')
     return response.data
   }
 
@@ -20,5 +20,20 @@ export function useHouseholdApi() {
     await baseApi.post('api/household/setup', dto)
   }
 
-  return { getHouseholds, createHousehold, setupHousehold }
+  const getPendingHouseholdInvites = async () => {
+    const response = await baseApi.get<HouseholdMemberDTO[]>('api/household/pending-invites')
+    return response.data
+  }
+
+  const acceptInvite = async (householdId: string) => {
+    await baseApi.patch(`api/household/invites/accept/${householdId}`)
+  }
+
+  return {
+    getHouseholds,
+    createHousehold,
+    setupHousehold,
+    getPendingHouseholdInvites,
+    acceptInvite,
+  }
 }

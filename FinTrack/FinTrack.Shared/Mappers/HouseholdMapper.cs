@@ -19,7 +19,10 @@ public static class HouseholdMapper
         return new HouseholdMemberDTO()
         {
             HouseholdId = member.HouseholdId,
-            UserId = member.UserId,
+            HouseholdName = member.Household.Name,
+            UserEmail = member.User.Email!,
+            UserFirstName = member.User.FirstName,
+            UserLastName = member.User.LastName,
             Role = member.Role,
             Status = member.Status,
             CreatedAt = member.CreatedAt

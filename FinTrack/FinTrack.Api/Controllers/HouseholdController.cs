@@ -27,9 +27,26 @@ public class HouseholdController : BaseController
     public async Task<IActionResult> GetUserHouseholds()
     {
         var userId = GetUserId();
-        List<Household> households = await _householdService.GetUserHouseholds(userId);
+        List<HouseholdMember> households = await _householdService.GetUserHouseholds(userId);
         var result = households.Select(h => h.MapToDTO()).ToList();
         return Ok(result);
+    }
+
+    [HttpGet("pending-invites")]
+    public async Task<IActionResult> GetInvitedHouseholds()
+    {
+        var userId = GetUserId();
+        List<HouseholdMember> householdMembers = await _householdService.GetUserPendingHouseholdInvitations(userId);
+        var result = householdMembers.Select(h => h.MapToDTO()).ToList();
+        return Ok(result);
+    }
+
+    [HttpPatch("invites/accept/{householdId:guid}")]
+    public async Task<IActionResult> AcceptHouseholdInvite([FromRoute] Guid householdId)
+    {
+        var userId = GetUserId();
+        await _householdService.AcceptInvite(userId, householdId);
+        return Ok();
     }
     
     [HttpPost]

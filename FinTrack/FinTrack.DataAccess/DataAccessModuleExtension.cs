@@ -16,7 +16,8 @@ public static class DataAccessModuleExtension
                 throw new Exception("Invalid db connection string (null)");
             }
 
-            options.UseNpgsql(connectionString).UseLazyLoadingProxies();
+            // options.UseNpgsql(connectionString).UseLazyLoadingProxies();
+            options.UseNpgsql(connectionString);
         });
     }
 }
