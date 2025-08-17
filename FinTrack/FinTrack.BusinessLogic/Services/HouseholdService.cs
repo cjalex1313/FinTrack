@@ -17,6 +17,10 @@ public interface IHouseholdService
     Task AddHouseholdInvitation(Guid householdId, Guid userId);
     Task<List<HouseholdMember>> GetUserPendingHouseholdInvitations(Guid userId);
     Task AcceptInvite(Guid userId, Guid householdId);
+    Task<bool> IsUserHouseholdOwner(Guid userId, Guid householdId);
+    Task<List<HouseholdMember>> GetHouseholdMembers(Guid householdId);
+    Task<Household> GetHousehold(Guid id);
+    Task DeleteHouseholdMember(Guid householdId, Guid memberId);
 }
 
 class HouseholdService : IHouseholdService
@@ -90,5 +94,42 @@ class HouseholdService : IHouseholdService
 
         householdMember.Status = HouseholdMemberStatus.Active;
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsUserHouseholdOwner(Guid userId, Guid householdId)
+    {
+        var household = await _context.Households.FindAsync(householdId);
+        if (household == null)
+        {
+            throw new BaseException("Household not found", (int)HttpStatusCode.NotFound);
+        }
+        return household.OwnerId == userId;       
+    }
+
+    public async Task<List<HouseholdMember>> GetHouseholdMembers(Guid householdId)
+    {
+        var householdMembers = await _context.HouseholdMembers.Where(hm => hm.HouseholdId == householdId).Include(hm => hm.Household).Include(hm => hm.User).ToListAsync();
+        return householdMembers;       
+    }
+
+    public async Task<Household> GetHousehold(Guid id)
+    {
+        var household = await _context.Households.FindAsync(id);
+        if (household == null)
+        {
+            throw new BaseException("Household not found", (int)HttpStatusCode.NotFound);
+        }
+        return household;       
+    }
+
+    public async Task DeleteHouseholdMember(Guid householdId, Guid memberId)
+    {
+        var householdMember = await _context.HouseholdMembers.FirstOrDefaultAsync(hm => hm.HouseholdId == householdId && hm.UserId == memberId);
+        if (householdMember == null)
+        {
+            throw new BaseException("Household member not found", (int)HttpStatusCode.NotFound);
+        }
+        _context.HouseholdMembers.Remove(householdMember);
+        await _context.SaveChangesAsync();       
     }
 }

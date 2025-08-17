@@ -1,12 +1,15 @@
 ﻿using FinTrack.BusinessLogic.Services.Auth;
 using FinTrack.DataAccess;
+using FinTrack.Shared.DTO;
 using FinTrack.Shared.DTO.Setup;
+using FinTrack.Shared.Entities;
 
 namespace FinTrack.BusinessLogic.Services;
 
 public interface ISetupService
 {
     Task SetupHousehold(SetupDTO dto, Guid userId);
+    Task InviteUser(string email, Household household);
 }
 
 class SetupService : ISetupService
@@ -46,13 +49,7 @@ class SetupService : ISetupService
             
             foreach (var invitation in dto.Invites)
             {
-                invitation.HouseholdId = household.Id;
-                var user = await _authService.GetUserByEmail(invitation.Email);
-                if (user == null)
-                {
-                    user = await _authService.InviteEmailToHousehold(invitation.Email, household.Name);
-                }
-                await _householdService.AddHouseholdInvitation(household.Id, user.Id);
+                await InviteUser(invitation.Email, household);
             }
             
             await transaction.CommitAsync();
@@ -62,5 +59,15 @@ class SetupService : ISetupService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task InviteUser(string email, Household household)
+    {
+        var user = await _authService.GetUserByEmail(email);
+        if (user == null)
+        {
+            user = await _authService.InviteEmailToHousehold(email, household.Name);
+        }
+        await _householdService.AddHouseholdInvitation(household.Id, user.Id);
     }
 }
