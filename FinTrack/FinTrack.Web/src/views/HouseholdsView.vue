@@ -240,6 +240,73 @@
     </div>
 
     <!-- Invite Member Dialog -->
+    <!-- Pending Household Invites -->
+    <div v-if="pendingInvites.length > 0 || loadingPendingInvites" class="mt-8">
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Pending Household Invites</h3>
+          <button
+            @click="loadPendingInvites"
+            :disabled="loadingPendingInvites"
+            class="text-indigo-600 hover:text-indigo-800 text-sm font-medium disabled:opacity-50"
+          >
+            <svg
+              class="w-4 h-4 inline mr-1"
+              :class="{ 'animate-spin': loadingPendingInvites }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div v-if="loadingPendingInvites" class="text-center py-4">
+          <p class="text-gray-600">Loading pending invites...</p>
+        </div>
+
+        <div v-else-if="pendingInvites.length > 0" class="space-y-3">
+          <div
+            v-for="invite in pendingInvites"
+            :key="invite.householdId + '-' + invite.userEmail"
+            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+          >
+            <div>
+              <p class="font-medium text-gray-900">
+                {{ invite.householdName || 'Unnamed Household' }}
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button
+                @click="acceptInviteAction(invite.householdId)"
+                :disabled="processingInvite === invite.householdId"
+                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Accept
+              </button>
+              <button
+                @click="rejectInviteAction(invite)"
+                :disabled="processingInvite === invite.householdId"
+                class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="text-center py-6 text-gray-500">No pending invites</div>
+      </div>
+    </div>
+
     <InviteMemberDialog
       v-if="showInviteDialog && householdStore.currentHousehold"
       :household-id="householdStore.currentHousehold.householdId"
@@ -370,6 +437,8 @@ watch(
 
 onMounted(async () => {
   await householdStore.loadHouseholds()
+  // Load pending invites for the current user
+  await loadPendingInvites()
   // Set the selected value to match the current household
   selectedHouseholdId.value = currentHouseholdId.value
 })
@@ -458,6 +527,79 @@ const deleteMember = async (member: HouseholdMemberDTO) => {
       detail: errorMessage,
       life: 5000,
     })
+  }
+}
+
+// Pending household invites state and actions
+const pendingInvites = ref<HouseholdMemberDTO[]>([])
+const loadingPendingInvites = ref<boolean>(false)
+const processingInvite = ref<string | null>(null)
+
+const loadPendingInvites = async () => {
+  try {
+    loadingPendingInvites.value = true
+    pendingInvites.value = await householdApi.getPendingHouseholdInvites()
+  } catch (error) {
+    console.error('Failed to load pending invites:', error)
+    pendingInvites.value = []
+  } finally {
+    loadingPendingInvites.value = false
+  }
+}
+
+const acceptInviteAction = async (householdId: string) => {
+  try {
+    processingInvite.value = householdId
+    await householdApi.acceptInvite(householdId)
+
+    toast.add({
+      severity: 'success',
+      summary: 'Invite Accepted',
+      detail: 'You have joined the household',
+      life: 3000,
+    })
+
+    // Refresh households and pending invites
+    await householdStore.loadHouseholds()
+    await loadPendingInvites()
+  } catch (error) {
+    console.error('Failed to accept invite:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Accept Failed',
+      detail: 'Unable to accept invite',
+      life: 5000,
+    })
+  } finally {
+    processingInvite.value = null
+  }
+}
+
+const rejectInviteAction = async (invite: HouseholdMemberDTO) => {
+  if (!invite) return
+  try {
+    processingInvite.value = invite.householdId
+
+    await householdApi.rejectHouseholdInvite(invite.householdId)
+
+    toast.add({
+      severity: 'success',
+      summary: 'Invite Rejected',
+      detail: 'Invite has been rejected',
+      life: 3000,
+    })
+
+    await loadPendingInvites()
+  } catch (error) {
+    console.error('Failed to reject invite:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Reject Failed',
+      detail: 'Unable to reject invite',
+      life: 5000,
+    })
+  } finally {
+    processingInvite.value = null
   }
 }
 

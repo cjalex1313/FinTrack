@@ -44,6 +44,10 @@ export function useHouseholdApi() {
     await baseApi.delete(`api/household/member`, { data: { householdId, email } })
   }
 
+  const rejectHouseholdInvite = async (householdId: string) => {
+    await baseApi.patch(`api/household/${householdId}/invite/reject`)
+  }
+
   return {
     getHouseholds,
     createHousehold,
@@ -53,5 +57,6 @@ export function useHouseholdApi() {
     getHouseholdMembers,
     inviteMember,
     removeHouseholdMember,
+    rejectHouseholdInvite,
   }
 }

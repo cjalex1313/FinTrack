@@ -85,6 +85,14 @@ public class HouseholdController : BaseController
         return Ok();
     }
 
+    [HttpPatch("{householdId:guid}/invite/reject")]
+    public async Task<IActionResult> RejectHouseholdInvite([FromRoute] Guid householdId)
+    {
+        var userId = GetUserId();
+        await _householdService.RejectUserInvite(userId, householdId);
+        return Ok();
+    }
+
     [HttpPost("invite")]
     public async Task<IActionResult> InviteUserToHousehold([FromBody] HouseholdInviteDTO dto)
     {

@@ -21,6 +21,7 @@ public interface IHouseholdService
     Task<List<HouseholdMember>> GetHouseholdMembers(Guid householdId);
     Task<Household> GetHousehold(Guid id);
     Task DeleteHouseholdMember(Guid householdId, Guid memberId);
+    Task RejectUserInvite(Guid userId, Guid householdId);
 }
 
 class HouseholdService : IHouseholdService
@@ -130,6 +131,17 @@ class HouseholdService : IHouseholdService
             throw new BaseException("Household member not found", (int)HttpStatusCode.NotFound);
         }
         _context.HouseholdMembers.Remove(householdMember);
+        await _context.SaveChangesAsync();       
+    }
+
+    public async Task RejectUserInvite(Guid userId, Guid householdId)
+    {
+        var householdMember = await _context.HouseholdMembers.FirstOrDefaultAsync(hm => hm.HouseholdId == householdId && hm.UserId == userId);
+        if (householdMember == null)
+        {
+            throw new BaseException("Household member not found", (int)HttpStatusCode.NotFound);
+        }
+        householdMember.Status = HouseholdMemberStatus.Rejected;
         await _context.SaveChangesAsync();       
     }
 }
