@@ -139,7 +139,9 @@ const loadExpenseBuckets = async () => {
   }
   try {
     loading.value = true
-    const buckets = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
+    const buckets = await expenseApi.getBucketsForHousehold(
+      householdStore.currentHousehold.householdId,
+    )
     expenseBuckets.value = buckets
   } catch (error) {
     console.error('Failed to load expense buckets:', error)
@@ -196,7 +198,7 @@ const saveExpenseBucket = async (bucket: ExpenseBucketDTO) => {
   try {
     if (bucket.id === EMPTY_GUID) {
       // Adding new bucket
-      bucket.householdId = householdStore.currentHousehold.id
+      bucket.householdId = householdStore.currentHousehold.householdId
       const savedBucket = await expenseApi.createExpenseBucket(bucket)
       if (expenseBuckets.value) {
         expenseBuckets.value.push(savedBucket)

@@ -57,6 +57,7 @@ public class AuthController : BaseController
         var response = new LoginResult()
         {
             AccessToken = tokenString,
+            PasswordSetNeeded = true
         };
         return Ok(response);
     }
@@ -103,6 +104,15 @@ public class AuthController : BaseController
         return Ok();
     }
 
+    [HttpPatch("set-password")]
+    [Authorize]
+    public async Task<IActionResult> SetPassword([FromBody] SetPasswordDTO request)
+    {
+        var userId = GetUserId();
+        await _authService.SetUserPassword(userId, request.Password);
+        return Ok();
+    }
+    
     [AllowAnonymous]
     [HttpPost(nameof(ExternalLoginCallback))]
     public async Task<IActionResult> ExternalLoginCallback([FromBody] ExternalLoginCallbackRequest request)
@@ -122,7 +132,7 @@ public class AuthController : BaseController
             return BadRequest("Invalid token");
         }
         var linkedToProvider = false;
-        var user = await _authService.GetUserByEmail(payload.Email!);
+        var user = await _authService.GetUserByEmail(payload.Email);
         if (user == null)
         {
             user = await _authService.RegisterUser(new RegisterRequest { Email = payload.Email!, Password = PasswordGenerator.GeneratePassword(_identityOptions) }, false);
@@ -148,5 +158,4 @@ public class AuthController : BaseController
         };
         return Ok(response);
     }
-
 }

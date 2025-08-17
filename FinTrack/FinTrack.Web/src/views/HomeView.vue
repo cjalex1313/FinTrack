@@ -24,7 +24,7 @@
         }"
       >
         <h1 class="m-0 text-slate-800 text-3xl font-bold tracking-[0.2px]">
-          {{ householdStore.currentHousehold.name }}
+          {{ householdStore.currentHousehold.householdName }}
         </h1>
         <Button class="whitespace-nowrap" @click="onAddExpenseClick">Add expense</Button>
       </header>
@@ -171,7 +171,7 @@
 
       <ExpenseDialog
         v-if="showExpenseDialog"
-        :household-id="householdStore.currentHousehold.id"
+        :household-id="householdStore.currentHousehold.householdId"
         :expense-buckets="expenseBuckets!"
         @closed="showExpenseDialog = false"
         @save="saveExpense"
@@ -340,7 +340,10 @@ const loadIncomes = async () => {
   if (!householdStore.currentHousehold) {
     return
   }
-  const incomes = await incomeApi.getIncomesForMonth(new Date(), householdStore.currentHousehold.id)
+  const incomes = await incomeApi.getIncomesForMonth(
+    new Date(),
+    householdStore.currentHousehold.householdId,
+  )
   oneTimeIncomes.value = incomes.oneTimeIncomes
   recurringIncomes.value = incomes.recurringIncomes
 }
@@ -349,7 +352,9 @@ const loadBuckets = async () => {
   if (!householdStore.currentHousehold) {
     return
   }
-  const buckets = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
+  const buckets = await expenseApi.getBucketsForHousehold(
+    householdStore.currentHousehold.householdId,
+  )
   expenseBuckets.value = buckets
 }
 
@@ -358,7 +363,7 @@ const loadExpenses = async () => {
     return
   }
   const expenses = await expenseApi.getExpensesForMonth(
-    householdStore.currentHousehold.id,
+    householdStore.currentHousehold.householdId,
     new Date(),
   )
   currentMonthExpenses.value = expenses

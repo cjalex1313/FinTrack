@@ -23,13 +23,15 @@ public interface IAuthService
     Task EnsureRolesExistInDb();
     Task ForgotPassword(string email);
     Task<ProfileDTO> GetProfile(Guid userId);
-    Task<ApplicationUser?> GetUserByEmail(string email);
     Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName);
     Task<JwtSecurityToken> Login(string email, string password);
     Task<JwtSecurityToken> Login(ApplicationUser user);
     Task<JwtSecurityToken> LoginByProviderKey(string email, string providerKey);
     Task<ApplicationUser> RegisterUser(RegisterRequest registerRequest, bool sendConfirmationEmail);
     Task ResetPassword(Guid userId, string token, string password);
+    Task<ApplicationUser?> GetUserByEmail(string email);
+    Task<ApplicationUser> InviteEmailToHousehold(string email, string householdName);
+    Task SetUserPassword(Guid userId, string password);
     Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
 }
 
@@ -171,11 +173,6 @@ public class AuthService : IAuthService
         return result;
     }
 
-    public async Task<ApplicationUser?> GetUserByEmail(string email)
-    {
-        return await _userManager.FindByEmailAsync(email);
-    }
-
     public async Task<bool> IsUserLinkedWithProvider(ApplicationUser user, string providerName)
     {
         if (user == null) return false;
@@ -315,6 +312,53 @@ public class AuthService : IAuthService
             }, MimeKit.Text.TextFormat.Html);
         }
         return identityUser;
+    }
+
+    public async Task<ApplicationUser?> GetUserByEmail(string email)
+    {
+        return await _userManager.FindByEmailAsync(email);
+    }
+
+    public async Task<ApplicationUser> InviteEmailToHousehold(string email, string householdName)
+    {
+        var identityUser = new ApplicationUser()
+        {
+            UserName = email,
+            Email = email,
+            SecurityStamp = Guid.NewGuid().ToString(),
+            EmailConfirmed = false
+        };
+        var result = await _userManager.CreateAsync(identityUser);
+        if (!result.Succeeded)
+        {
+            throw new UserCreationException();
+        }
+        
+        var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(identityUser);
+        var encodedToken = Uri.EscapeDataString(confirmationToken);
+        _emailService.SendEmail(new Email.Models.MailData
+        {
+            Email = email,
+            Name = email,
+            Subject = "Household invitation",
+            Body =
+                $"Welcome to FinTrack. You have been invited to join the app in the household called {householdName}. Click <a href=\"{_apiConfig.EmailConfirmationUrl + "?userId=" + identityUser.Id + "&token=" + encodedToken}\">here</a> to confirm your email"
+        }, MimeKit.Text.TextFormat.Html);
+        return identityUser;
+    }
+
+    public async Task SetUserPassword(Guid userId, string password)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        var result = await _userManager.AddPasswordAsync(user, password);
+        if (!result.Succeeded)
+        {
+            throw new BaseException("Error while setting user password");
+        }
     }
 
     private JwtSecurityToken GetToken(List<Claim> authClaims)

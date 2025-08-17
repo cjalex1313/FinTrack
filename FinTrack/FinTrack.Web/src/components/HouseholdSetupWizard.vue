@@ -3,7 +3,7 @@
     <div class="mb-4 sm:mb-6">
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Household Setup</h1>
       <p class="text-sm sm:text-base text-gray-600">
-        Let's set up your household financial tracking in 3 simple steps.
+        Let's set up your household financial tracking in 4 simple steps.
       </p>
     </div>
 
@@ -12,6 +12,7 @@
         <Step value="1">Household Information</Step>
         <Step value="2">Income Sources</Step>
         <Step value="3">Expense Categories</Step>
+        <Step value="4">Invite Members</Step>
       </StepList>
 
       <StepPanels>
@@ -362,10 +363,118 @@
               class="w-full sm:w-auto order-2 sm:order-1"
             />
             <Button
+              label="Next"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              @click="nextStep"
+              class="w-full sm:w-auto order-1 sm:order-2"
+            />
+          </div>
+        </StepPanel>
+
+        <StepPanel value="4">
+          <div class="flex flex-col space-y-4 sm:space-y-6">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6">
+              <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
+                <i class="pi pi-users mr-2"></i>
+                Invite Household Members
+              </h2>
+              <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+                Invite family members or roommates to join your household and collaborate on
+                financial planning.
+              </p>
+
+              <!-- Invite Form -->
+              <div class="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  Add New Invite
+                </h3>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div class="flex-1">
+                    <FloatLabel variant="on">
+                      <InputText
+                        id="inviteEmail"
+                        v-model="newInviteEmail"
+                        class="w-full"
+                        placeholder="Enter email address"
+                        type="email"
+                      />
+                      <label for="inviteEmail">Email Address</label>
+                    </FloatLabel>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <Button
+                      label="Add Invite"
+                      icon="pi pi-plus"
+                      @click="addInvite"
+                      :disabled="!isInviteValid"
+                      class="w-full sm:w-auto"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Invites List -->
+              <div v-if="invites.length > 0">
+                <h3 class="text-base sm:text-lg font-medium text-gray-700 mb-3 sm:mb-4">
+                  Pending Invites
+                </h3>
+                <div class="space-y-3">
+                  <div
+                    v-for="(invite, index) in invites"
+                    :key="index"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-white border border-gray-200 rounded-lg space-y-3 sm:space-y-0"
+                  >
+                    <div class="flex-1">
+                      <div
+                        class="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4"
+                      >
+                        <div class="flex-1">
+                          <p class="font-medium text-gray-900 text-sm sm:text-base">
+                            {{ invite.email }}
+                          </p>
+                          <p class="text-xs sm:text-sm text-gray-500">Pending invitation</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex space-x-2 self-end sm:self-auto">
+                      <Button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        size="small"
+                        @click="removeInvite(index)"
+                        outlined
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-center py-6 sm:py-8">
+                <i class="pi pi-info-circle text-xl sm:text-2xl text-gray-400 mb-2"></i>
+                <p class="text-sm sm:text-base text-gray-500">No invites added yet</p>
+                <p class="text-xs sm:text-sm text-gray-400">
+                  Add email addresses above to invite members
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex flex-col sm:flex-row pt-4 sm:pt-6 justify-between space-y-2 sm:space-y-0"
+          >
+            <Button
+              label="Back"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              @click="prevStep"
+              class="w-full sm:w-auto order-2 sm:order-1"
+            />
+            <Button
               label="Complete Setup"
               icon="pi pi-check"
               iconPos="right"
               severity="success"
+              :disabled="isCompleteDisabled"
               @click="completeSetup"
               class="w-full sm:w-auto order-1 sm:order-2"
             />
@@ -373,11 +482,51 @@
         </StepPanel>
       </StepPanels>
     </Stepper>
+
+    <!-- Pending Invites Section -->
+    <div v-if="pendingInvites.length > 0" class="mt-8 sm:mt-12">
+      <div class="border-t border-gray-200 pt-6 sm:pt-8">
+        <div class="text-center mb-4 sm:mb-6">
+          <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
+            Or Join an Existing Household
+          </h2>
+          <p class="text-sm sm:text-base text-gray-600">
+            You have pending invitations to join these households
+          </p>
+        </div>
+
+        <div class="space-y-3 sm:space-y-4">
+          <div
+            v-for="invite in pendingInvites"
+            :key="invite.householdId"
+            class="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-lg space-y-3 sm:space-y-0"
+          >
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-1">
+                <i class="pi pi-home text-blue-600"></i>
+                <h3 class="font-medium text-gray-900 text-sm sm:text-base">
+                  {{ invite.householdName }}
+                </h3>
+              </div>
+            </div>
+            <div class="flex space-x-2 self-end sm:self-auto">
+              <Button
+                label="Join Household"
+                icon="pi pi-check"
+                severity="info"
+                @click="joinHousehold(invite)"
+                class="w-full sm:w-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import Stepper from 'primevue/stepper'
 import StepList from 'primevue/steplist'
 import Step from 'primevue/step'
@@ -392,12 +541,15 @@ import {
   type SetupDTO,
   type RecurringIncomeDTO,
   type ExpenseBucketDTO,
+  type HouseholdInviteDTO,
+  type HouseholdMemberDTO,
 } from '@/api/models'
 import { RecurrenceType } from '@/models/recurrenceType'
 import { useHouseholdApi } from '@/api/householdApi'
 import { useDeviceType } from '@/composables/useDeviceType'
+import { useToast } from 'primevue/usetoast'
 
-const houstholdApi = useHouseholdApi()
+const householdApi = useHouseholdApi()
 const { isMobile } = useDeviceType()
 
 const emit = defineEmits<{
@@ -410,6 +562,8 @@ const household = ref<HouseholdDTO>({
   id: EMPTY_GUID,
   name: '',
 })
+const pendingInvites = ref<HouseholdMemberDTO[]>([])
+const isCompleteDisabled = ref<boolean>(false)
 
 // Recurring Income Management
 const recurringIncomes = ref<RecurringIncomeDTO[]>([])
@@ -418,6 +572,7 @@ const editingIndex = ref(-1)
 
 // Expense Buckets Management
 const expenseBuckets = ref<ExpenseBucketDTO[]>([])
+const invites = ref<HouseholdInviteDTO[]>([])
 const editingBucket = ref(false)
 const editingBucketIndex = ref(-1)
 
@@ -439,6 +594,8 @@ const currentIncome = ref({
   description: '',
 })
 
+const newInviteEmail = ref('')
+
 const recurrenceOptions = [
   { label: 'Daily', value: RecurrenceType.Daily },
   { label: 'Weekly', value: RecurrenceType.Weekly },
@@ -447,6 +604,10 @@ const recurrenceOptions = [
   { label: 'Quarterly', value: RecurrenceType.Quarterly },
   { label: 'Yearly', value: RecurrenceType.Yearly },
 ]
+
+onMounted(async () => {
+  pendingInvites.value = await householdApi.getPendingHouseholdInvites()
+})
 
 const isIncomeValid = computed(() => {
   return (
@@ -468,6 +629,10 @@ const isBucketValid = computed(() => {
         (!editingBucket.value || idx !== editingBucketIndex.value),
     )
   return !!name && amountOk && !!unique
+})
+
+const isInviteValid = computed(() => {
+  return newInviteEmail.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newInviteEmail.value)
 })
 
 // Helper functions
@@ -653,10 +818,25 @@ const deleteBucket = (index: number) => {
   expenseBuckets.value.splice(index, 1)
 }
 
+const addInvite = () => {
+  if (!isInviteValid.value) return
+
+  const inviteToAdd: HouseholdInviteDTO = {
+    householdId: EMPTY_GUID,
+    email: newInviteEmail.value,
+  }
+  invites.value.push(inviteToAdd)
+  newInviteEmail.value = ''
+}
+
+const removeInvite = (index: number) => {
+  invites.value.splice(index, 1)
+}
+
 // Navigation functions
 const nextStep = () => {
   const currentStep = parseInt(activeStep.value)
-  if (currentStep < 3) {
+  if (currentStep < 4) {
     activeStep.value = (currentStep + 1).toString()
   }
 }
@@ -669,14 +849,42 @@ const prevStep = () => {
 }
 
 const completeSetup = async () => {
-  const setupDto: SetupDTO = {
-    household: household.value,
-    recurringIncomes: recurringIncomes.value,
-    expenseBuckets: expenseBuckets.value,
-  }
-  await houstholdApi.setupHousehold(setupDto)
+  try {
+    isCompleteDisabled.value = true
+    const setupDto: SetupDTO = {
+      household: household.value,
+      recurringIncomes: recurringIncomes.value,
+      expenseBuckets: expenseBuckets.value,
+      invites: invites.value,
+    }
+    await householdApi.setupHousehold(setupDto)
 
-  emit('completed')
+    emit('completed')
+  } finally {
+    isCompleteDisabled.value = false
+  }
+}
+
+const toast = useToast()
+
+const joinHousehold = async (invite: HouseholdMemberDTO) => {
+  try {
+    await householdApi.acceptInvite(invite.householdId)
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `You have joined ${invite.householdName}`,
+      life: 3000,
+    })
+    emit('completed')
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to join household. Please try again.',
+      life: 3000,
+    })
+  }
 }
 </script>
 

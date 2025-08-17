@@ -209,6 +209,14 @@ const menuItems = [
     },
   },
   {
+    label: 'Households',
+    command: () => {
+      router.push({
+        name: 'Households',
+      })
+    },
+  },
+  {
     separator: true,
   },
   {

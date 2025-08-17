@@ -237,7 +237,7 @@ const loadIncomes = async (month?: Date) => {
     const targetMonth = month || selectedMonth.value
     const incomes = await incomeApi.getIncomesForMonth(
       targetMonth,
-      householdStore.currentHousehold.id,
+      householdStore.currentHousehold.householdId,
     )
     oneTimeIncomes.value = incomes.oneTimeIncomes
     recurringIncomes.value = incomes.recurringIncomes
@@ -342,7 +342,7 @@ const saveOneTimeIncome = async (income: OneTimeIncomeDTO) => {
   try {
     if (income.id === EMPTY_GUID) {
       // Adding new income
-      income.householdId = householdStore.currentHousehold.id
+      income.householdId = householdStore.currentHousehold.householdId
       const savedIncome = await incomeApi.addOneTimeIncome(income)
       if (oneTimeIncomes.value) {
         oneTimeIncomes.value.push(savedIncome)
@@ -372,7 +372,7 @@ const saveRecurringIncome = async (income: RecurringIncomeDTO) => {
     }
     if (income.id === EMPTY_GUID) {
       // Adding new income
-      income.householdId = householdStore.currentHousehold.id
+      income.householdId = householdStore.currentHousehold.householdId
       const savedIncome = await incomeApi.addRecurringIncome(income)
       if (recurringIncomes.value) {
         recurringIncomes.value.push(savedIncome)

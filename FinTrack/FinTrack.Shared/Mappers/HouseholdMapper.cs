@@ -13,4 +13,19 @@ public static class HouseholdMapper
             Name = household.Name
         };
     }
+
+    public static HouseholdMemberDTO MapToDTO(this HouseholdMember member)
+    {
+        return new HouseholdMemberDTO()
+        {
+            HouseholdId = member.HouseholdId,
+            HouseholdName = member.Household.Name,
+            UserEmail = member.User.Email!,
+            UserFirstName = member.User.FirstName,
+            UserLastName = member.User.LastName,
+            Role = member.Role,
+            Status = member.Status,
+            CreatedAt = member.CreatedAt
+        };
+    }
 }

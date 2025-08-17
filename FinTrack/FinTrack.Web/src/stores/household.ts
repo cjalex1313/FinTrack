@@ -1,17 +1,33 @@
 import { useHouseholdApi } from '@/api/householdApi'
-import type { HouseholdDTO } from '@/api/models'
+import type { HouseholdDTO, HouseholdMemberDTO } from '@/api/models'
+import { HouseholdMemberRole } from '@/models/role'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useHouseholdStore = defineStore('hosuehold', () => {
-  const households = ref<HouseholdDTO[] | null>(null)
-  const currentHousehold = ref<HouseholdDTO | null>(null)
+export const useHouseholdStore = defineStore('household', () => {
+  const households = ref<HouseholdMemberDTO[] | null>(null)
+  const currentHousehold = ref<HouseholdMemberDTO | null>(null)
   const loading = ref<boolean>(false)
 
-  const setHouseholds = (newHouseholds: HouseholdDTO[]) => {
+  const setHouseholds = (newHouseholds: HouseholdMemberDTO[]) => {
     households.value = newHouseholds
     if (newHouseholds.length > 0) {
-      currentHousehold.value = newHouseholds[0]
+      // Attempt to retrieve the current household id from localStorage
+      const storedHouseholdId = localStorage.getItem('currentHouseholdId')
+      let selectedHousehold
+      if (storedHouseholdId) {
+        // Assuming each household has a 'householdId' property
+        selectedHousehold = newHouseholds.find(
+          (household) => household.householdId?.toString() === storedHouseholdId,
+        )
+      }
+      // If not found in localStorage or not present in the array, use original workflow
+      if (!selectedHousehold) {
+        selectedHousehold =
+          newHouseholds.find((household) => household.role === HouseholdMemberRole.Owner) ||
+          newHouseholds[0]
+      }
+      currentHousehold.value = selectedHousehold
     } else {
       currentHousehold.value = null
     }
@@ -28,8 +44,12 @@ export const useHouseholdStore = defineStore('hosuehold', () => {
     }
   }
 
-  const setCurrentHousehold = (newCurrentHousehold: HouseholdDTO) => {
+  const setCurrentHousehold = (newCurrentHousehold: HouseholdMemberDTO) => {
     currentHousehold.value = newCurrentHousehold
+    // Store the currently selected household's id in localStorage for persistence
+    if (newCurrentHousehold && newCurrentHousehold.householdId) {
+      localStorage.setItem('currentHouseholdId', newCurrentHousehold.householdId.toString())
+    }
   }
 
   return {

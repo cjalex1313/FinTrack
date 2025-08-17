@@ -79,7 +79,7 @@
       <!-- Expense Dialog -->
       <ExpenseDialog
         v-if="showExpenseDialog"
-        :household-id="householdStore.currentHousehold!.id"
+        :household-id="householdStore.currentHousehold!.householdId"
         :expense-buckets="expenseBuckets!"
         :expense="editingExpense"
         @save="saveExpense"
@@ -141,7 +141,9 @@ const loadExpenseBuckets = async () => {
   if (!householdStore.currentHousehold) {
     return
   }
-  expenseBuckets.value = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
+  expenseBuckets.value = await expenseApi.getBucketsForHousehold(
+    householdStore.currentHousehold.householdId,
+  )
 }
 
 const loadExpenses = async (month?: Date) => {
@@ -152,7 +154,7 @@ const loadExpenses = async (month?: Date) => {
     loading.value = true
     const targetMonth = month || selectedMonth.value
     const expensesData = await expenseApi.getExpensesForMonth(
-      householdStore.currentHousehold.id,
+      householdStore.currentHousehold.householdId,
       targetMonth,
     )
     expenses.value = expensesData
@@ -216,7 +218,7 @@ const saveExpense = async (expense: ExpenseDTO) => {
   try {
     if (expense.id === EMPTY_GUID) {
       // Adding new expense
-      expense.householdId = householdStore.currentHousehold.id
+      expense.householdId = householdStore.currentHousehold.householdId
       const savedExpense = await expenseApi.createExpense(expense)
       if (expenses.value) {
         expenses.value.push(savedExpense)

@@ -83,7 +83,7 @@
       <!-- Recurring Expense Dialog -->
       <RecurringExpenseDialog
         v-if="showRecurringExpenseDialog"
-        :household-id="householdStore.currentHousehold!.id"
+        :household-id="householdStore.currentHousehold!.householdId"
         :expense-buckets="expenseBuckets || []"
         :recurring-expense="editingRecurringExpense"
         @save="saveRecurringExpense"
@@ -158,7 +158,9 @@ const loadExpenseBuckets = async () => {
   // We need to import the expense API to get buckets
   const { useExpenseApi } = await import('@/api/expenseApi')
   const expenseApi = useExpenseApi()
-  expenseBuckets.value = await expenseApi.getBucketsForHousehold(householdStore.currentHousehold.id)
+  expenseBuckets.value = await expenseApi.getBucketsForHousehold(
+    householdStore.currentHousehold.householdId,
+  )
 }
 
 const loadRecurringExpenses = async () => {
@@ -168,7 +170,7 @@ const loadRecurringExpenses = async () => {
   try {
     loading.value = true
     const recurringExpensesData = await recurringExpenseApi.getRecurringExpenses(
-      householdStore.currentHousehold.id,
+      householdStore.currentHousehold.householdId,
     )
     recurringExpenses.value = recurringExpensesData
   } catch (error) {
@@ -226,7 +228,7 @@ const saveRecurringExpense = async (recurringExpense: RecurringExpenseDTO) => {
   try {
     if (recurringExpense.id === '00000000-0000-0000-0000-000000000000') {
       // Adding new recurring expense
-      recurringExpense.householdId = householdStore.currentHousehold.id
+      recurringExpense.householdId = householdStore.currentHousehold.householdId
       const savedRecurringExpense =
         await recurringExpenseApi.createRecurringExpense(recurringExpense)
       if (recurringExpenses.value) {
