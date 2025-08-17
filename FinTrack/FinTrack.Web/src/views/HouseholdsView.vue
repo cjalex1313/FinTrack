@@ -59,7 +59,7 @@
         >
           <option value="" disabled>Choose a household...</option>
           <option
-            v-for="household in householdStore.households"
+            v-for="household in sortedHouseholds"
             :key="household.householdId"
             :value="household.householdId"
           >
@@ -464,4 +464,16 @@ const deleteMember = async (member: HouseholdMemberDTO) => {
 // Expose HouseholdMemberRole and HouseholdMemberStatus to template
 const { Owner, Admin, Member } = HouseholdMemberRole
 const { PendingRespone, Expired, Rejected, Active } = HouseholdMemberStatus
+
+const sortedHouseholds = computed(() => {
+  if (!householdStore.households) return []
+  return [...householdStore.households].sort((a, b) => {
+    if (a.role === HouseholdMemberRole.Owner && b.role !== HouseholdMemberRole.Owner) {
+      return -1
+    } else if (a.role !== HouseholdMemberRole.Owner && b.role === HouseholdMemberRole.Owner) {
+      return 1
+    }
+    return 0
+  })
+})
 </script>

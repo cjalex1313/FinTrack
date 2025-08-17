@@ -1,5 +1,6 @@
 import { useHouseholdApi } from '@/api/householdApi'
 import type { HouseholdDTO, HouseholdMemberDTO } from '@/api/models'
+import { HouseholdMemberRole } from '@/models/role'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -11,7 +12,10 @@ export const useHouseholdStore = defineStore('household', () => {
   const setHouseholds = (newHouseholds: HouseholdMemberDTO[]) => {
     households.value = newHouseholds
     if (newHouseholds.length > 0) {
-      currentHousehold.value = newHouseholds[0]
+      const ownerHousehold = newHouseholds.find(
+        (household) => household.role === HouseholdMemberRole.Owner,
+      ) // 2 represents Owner role
+      currentHousehold.value = ownerHousehold || newHouseholds[0]
     } else {
       currentHousehold.value = null
     }
