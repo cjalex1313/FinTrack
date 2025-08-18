@@ -2,7 +2,6 @@
 using FinTrack.BusinessLogic.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.Net;
 
 namespace FinTrack.Api.Security
 {
@@ -31,10 +30,7 @@ namespace FinTrack.Api.Security
             bool userIsOwner = await householdService.IsUserHouseholdOwner(userId.Value, householdId);
             if (!userIsOwner)
             {
-                context.Result = new ObjectResult("User is not authorized to perform this action")
-                {
-                    StatusCode = (int)HttpStatusCode.Unauthorized
-                };
+                context.Result = new ForbidResult("User cannot perform this action");
                 return;
             }
 
