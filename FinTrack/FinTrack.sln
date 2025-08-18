@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Email", "FinTrack.
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{13B00595-4E42-406C-854C-5377B39B7884}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Tests.Unit", "FinTrack.Tests.Unit\FinTrack.Tests.Unit.csproj", "{C94E1FC3-7D33-4942-8FEF-D77D4799D133}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,11 +56,16 @@ Global
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C94E1FC3-7D33-4942-8FEF-D77D4799D133}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C94E1FC3-7D33-4942-8FEF-D77D4799D133}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C94E1FC3-7D33-4942-8FEF-D77D4799D133}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C94E1FC3-7D33-4942-8FEF-D77D4799D133}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{395C65E7-12BA-432D-8552-C174AF3A9E35} = {800AAAEC-1373-49B9-9AFC-2DFA565859FA}
+		{C94E1FC3-7D33-4942-8FEF-D77D4799D133} = {13B00595-4E42-406C-854C-5377B39B7884}
 	EndGlobalSection
 EndGlobal
