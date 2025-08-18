@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function setJwt(accessToken: string) {
     localStorage.setItem(jwtKey, accessToken)
-    await getProfile();
+    await getProfile()
   }
 
   async function getProfile() {
@@ -37,6 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem(jwtKey)
     }
     authData.profile = null
+    authData.currentRole = null
   }
 
   return { authData, setJwt, signOut, getProfile }
