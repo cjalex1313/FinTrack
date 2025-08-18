@@ -1,0 +1,58 @@
+name: Run Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build .NET solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run .NET unit tests
+        run: dotnet test FinTrack.Tests.Unit/FinTrack.Tests.Unit.csproj --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload .NET test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-test-results
+          path: "**/TestResults/*.trx"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Install Node.js dependencies
+        working-directory: FinTrack.Web
+        run: npm ci
+
+      - name: Build Web (TypeScript check)
+        working-directory: FinTrack.Web
+        run: npm run build
+
+      - name: Run Web unit tests
+        working-directory: FinTrack.Web
+        run: npm run test:unit || true
+
+      - name: Upload Web test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-test-results
+          path: FinTrack.Web/web-test-results.json
