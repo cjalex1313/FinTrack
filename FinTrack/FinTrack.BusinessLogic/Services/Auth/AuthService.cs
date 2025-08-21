@@ -33,6 +33,7 @@ public interface IAuthService
     Task<ApplicationUser> InviteEmailToHousehold(string email, string householdName);
     Task SetUserPassword(Guid userId, string password);
     Task UpdateProfileNames(Guid userId, string? firstName, string? lastName);
+    Task<bool> UserHasPassword(Guid userId);
 }
 
 public class AuthService : IAuthService
@@ -270,6 +271,16 @@ public class AuthService : IAuthService
         {
             throw new BaseException("Error while updating user profile");
         }
+    }
+
+    public async Task<bool> UserHasPassword(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            throw new UserIdNotFoundException(userId);
+        }
+        return await _userManager.HasPasswordAsync(user);       
     }
 
     private async Task AddRoleToUser(ApplicationUser identityUser, string role)

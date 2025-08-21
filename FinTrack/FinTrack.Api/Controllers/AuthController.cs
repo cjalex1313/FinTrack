@@ -54,10 +54,11 @@ public class AuthController : BaseController
     {
         var token = await _authService.ConfirmEmail(emailValidationRequest.UserId, emailValidationRequest.Token);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        var hasPassword = await _authService.UserHasPassword(emailValidationRequest.UserId);
         var response = new LoginResult()
         {
             AccessToken = tokenString,
-            PasswordSetNeeded = true
+            PasswordSetNeeded = !hasPassword
         };
         return Ok(response);
     }
