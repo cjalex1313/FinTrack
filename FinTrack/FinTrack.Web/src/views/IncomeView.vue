@@ -11,14 +11,7 @@
       <!-- Header -->
       <header class="flex flex-col sm:flex-row sm:justify-between items-center gap-2 mb-6">
         <h1 class="m-0 text-slate-800 text-3xl font-bold tracking-[0.2px]">Income Management</h1>
-        <div class="flex gap-2">
-          <Button class="whitespace-nowrap" @click="onAddOneTimeIncomeClick"
-            >Add One-time Income</Button
-          >
-          <Button class="whitespace-nowrap" @click="onAddRecurringIncomeClick"
-            >Add Recurring Income</Button
-          >
-        </div>
+        <div class="flex gap-2"></div>
       </header>
 
       <!-- Month Selection -->
@@ -32,7 +25,12 @@
         <div
           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[700px] overflow-y-auto"
         >
-          <h2 class="text-xl font-semibold text-slate-800 mb-4">One-time Incomes</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-slate-800">One-time Incomes</h2>
+            <Button class="whitespace-nowrap" @click="onAddOneTimeIncomeClick"
+              >Add One-time Income</Button
+            >
+          </div>
           <Skeleton v-if="oneTimeIncomes == null" height="100px" width="100%" />
           <div v-else>
             <div v-if="oneTimeIncomes.length === 0" class="bg-gray-50 rounded-lg p-8 text-center">
@@ -72,7 +70,12 @@
         <div
           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[700px] overflow-y-auto"
         >
-          <h2 class="text-xl font-semibold text-slate-800 mb-4">Recurring Incomes</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-slate-800 mb-4">Recurring Incomes</h2>
+            <Button class="whitespace-nowrap" @click="onAddRecurringIncomeClick"
+              >Add Recurring Income</Button
+            >
+          </div>
           <Skeleton v-if="recurringIncomes == null" height="100px" width="100%" />
           <div v-else>
             <div v-if="recurringIncomes.length === 0" class="bg-gray-50 rounded-lg p-8 text-center">
