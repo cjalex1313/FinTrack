@@ -38,7 +38,8 @@ public static class ExpensesMapper
             Amount = expense.Amount,
             Recurrence = expense.Recurrence,
             Description = expense.Description,
-            NextDate = expense.NextDate       
+            NextDate = expense.NextDate,
+            HouseholdId = expense.HouseholdId
         };       
     }
 }

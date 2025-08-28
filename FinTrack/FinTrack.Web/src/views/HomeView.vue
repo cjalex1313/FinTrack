@@ -120,6 +120,7 @@
                   :key="bucket.id"
                   :bucket="bucket"
                   :utilization-percentage="bucket.utilizationPercentage"
+                  :planned-utilization-percentage="bucket.plannedUtilizationPercentage"
                 />
               </div>
             </div>
@@ -169,6 +170,50 @@
         </div>
       </section>
 
+      <!-- Planned Expenses Section -->
+      <section class="mt-8">
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[600px] overflow-y-auto"
+        >
+          <h2 class="text-xl font-semibold text-slate-800 mb-4">Planned Expenses (This Month)</h2>
+          <Skeleton v-if="recurringExpenses == null" height="100px" width="100%" />
+          <div v-else>
+            <div
+              v-if="plannedExpensesForCurrentMonth.length === 0"
+              class="bg-gray-50 rounded-lg p-8 text-center"
+            >
+              <div class="text-gray-400 mb-2">
+                <svg
+                  class="w-12 h-12 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  ></path>
+                </svg>
+              </div>
+              <p class="text-gray-500 font-medium">No planned expenses this month</p>
+              <p class="text-sm text-gray-400 mt-1">
+                Recurring expenses scheduled for this month will appear here
+              </p>
+            </div>
+            <div v-else>
+              <PlannedExpenseCard
+                v-for="plannedExpense in plannedExpensesForCurrentMonth"
+                :key="`${plannedExpense.id}-${plannedExpense.occurrence}`"
+                :planned-expense="plannedExpense"
+                :expense-buckets="expenseBuckets!"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ExpenseDialog
         v-if="showExpenseDialog"
         :household-id="householdStore.currentHousehold.householdId"
@@ -187,6 +232,7 @@ import type {
   RecurringIncomeDTO,
   ExpenseBucketDTO,
   ExpenseDTO,
+  RecurringExpenseDTO,
 } from '@/api/models'
 import HouseholdSetupWizard from '@/components/HouseholdSetupWizard.vue'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -197,22 +243,31 @@ import { useExpenseApi } from '@/api/expenseApi'
 import ExpenseDialog from '@/components/expense/ExpenseDialog.vue'
 import { useIncomeApi } from '@/api/incomeApi'
 import getMonthlyEquivalent from '@/helpers/getMonthlyEquivalent'
+import calculateRecurringExpenseForMonth, {
+  getNextOccurrence,
+} from '@/helpers/calculateRecurringExpenseForMonth'
+import { RecurrenceType } from '@/models/recurrenceType'
 import OneTimeIncomeCard from '@/components/income/OneTimeIncomeCard.vue'
 import RecurringIncomeCard from '@/components/income/RecurringIncomeCard.vue'
 import ExpenseBucketCard from '@/components/expense/ExpenseBucketCard.vue'
 import ExpenseCard from '@/components/expense/ExpenseCard.vue'
+import PlannedExpenseCard from '@/components/expense/PlannedExpenseCard.vue'
+import RecurringExpenseCard from '@/components/expense/recurring/RecurringExpenseCard.vue'
 import { useHouseholdStore } from '@/stores/household'
+import { useRecurringExpenseApi } from '@/api/recurringExpenseApi'
 
 const expenseBuckets = ref<ExpenseBucketDTO[] | null>(null)
 const currentMonthExpenses = ref<ExpenseDTO[] | null>(null)
 const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
+const recurringExpenses = ref<RecurringExpenseDTO[] | null>(null)
 const showExpenseDialog = ref(false)
 
 const expenseApi = useExpenseApi()
 const incomeApi = useIncomeApi()
 const { isMobile } = useDeviceType()
 const householdStore = useHouseholdStore()
+const recurringExpenseApi = useRecurringExpenseApi()
 
 const monthlyBudget = computed(() => {
   if (!expenseBuckets.value) {
@@ -229,8 +284,13 @@ const calculatedBuckets = computed(() => {
   if (expenseBuckets.value == null) {
     return null
   }
+  const currentDate = new Date()
+
   const result = expenseBuckets.value.map((bucket) => {
     let utilizationPercentage: number | null = null
+    let plannedUtilizationPercentage: number | null = null
+
+    // Calculate actual utilization from current month expenses
     if (currentMonthExpenses.value != null) {
       const expensesUsed = currentMonthExpenses.value
         .filter((e) => e.expenseBucketId === bucket.id)
@@ -238,22 +298,69 @@ const calculatedBuckets = computed(() => {
       const utilisation = (expensesUsed * 100) / bucket.monthlyAmount
       utilizationPercentage = utilisation
     }
+
+    // Calculate planned utilization from recurring expenses
+    if (recurringExpenses.value != null) {
+      const plannedExpensesAmount = recurringExpenses.value
+        .filter((re) => re.expenseBucketId === bucket.id)
+        .reduce((acc, recurringExpense) => {
+          return (
+            acc +
+            calculateRecurringExpenseForMonth(
+              recurringExpense.nextDate,
+              recurringExpense.recurrence,
+              recurringExpense.amount,
+              currentDate,
+            )
+          )
+        }, 0)
+
+      const plannedUtilisation = (plannedExpensesAmount * 100) / bucket.monthlyAmount
+      plannedUtilizationPercentage = plannedUtilisation
+    }
+
     return {
       ...bucket,
       utilizationPercentage,
+      plannedUtilizationPercentage,
     }
   })
+
   if (currentMonthExpenses.value != null) {
     const otherExpenses = currentMonthExpenses.value.filter((e) => e.expenseBucketId == null)
     const otherExpensesAmount = otherExpenses.reduce((a, b) => a + b.amount, 0)
-    if (otherExpensesAmount > 0) {
+
+    // Calculate planned "Other" expenses from recurring expenses without bucket
+    let plannedOtherAmount = 0
+    if (recurringExpenses.value != null) {
+      plannedOtherAmount = recurringExpenses.value
+        .filter((re) => re.expenseBucketId == null)
+        .reduce((acc, recurringExpense) => {
+          return (
+            acc +
+            calculateRecurringExpenseForMonth(
+              recurringExpense.nextDate,
+              recurringExpense.recurrence,
+              recurringExpense.amount,
+              currentDate,
+            )
+          )
+        }, 0)
+    }
+
+    const totalOtherAmount = otherExpensesAmount + plannedOtherAmount
+
+    if (totalOtherAmount > 0) {
       result.push({
         id: 'Other',
         householdId: '',
         name: 'Other',
-        monthlyAmount: otherExpensesAmount,
+        monthlyAmount: totalOtherAmount,
         description: 'Unknown bucket',
-        utilizationPercentage: null,
+        utilizationPercentage:
+          otherExpensesAmount > 0 ? (otherExpensesAmount * 100) / totalOtherAmount : 0,
+        plannedUtilizationPercentage:
+          plannedOtherAmount > 0 ? (plannedOtherAmount * 100) / totalOtherAmount : 0,
       })
     }
   }
@@ -329,11 +436,78 @@ const allIncomes = computed(() => {
   return incomes
 })
 
+const plannedExpensesForCurrentMonth = computed(() => {
+  if (!recurringExpenses.value) {
+    return []
+  }
+
+  const currentDate = new Date()
+  const plannedExpenses: Array<
+    RecurringExpenseDTO & { scheduledDate: string; occurrence: number }
+  > = []
+
+  recurringExpenses.value.forEach((expense) => {
+    // Use the existing helper to check if this expense occurs in the current month
+    const monthlyAmount = calculateRecurringExpenseForMonth(
+      expense.nextDate,
+      expense.recurrence,
+      expense.amount,
+      currentDate,
+    )
+
+    // If no amount is calculated, the expense doesn't occur this month
+    if (monthlyAmount === 0) {
+      return
+    }
+
+    // Calculate how many occurrences there will be
+    const numberOfOccurrences = Math.round(monthlyAmount / expense.amount)
+
+    // Generate individual occurrence entries
+    const nextDateObj = new Date(expense.nextDate)
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth()
+    const monthStart = new Date(currentYear, currentMonth, 1)
+    const monthEnd = new Date(currentYear, currentMonth + 1, 0)
+
+    let currentOccurrence = new Date(nextDateObj)
+    let occurrenceCount = 1
+
+    // Move to first occurrence in current month if needed
+    while (currentOccurrence < monthStart) {
+      currentOccurrence = getNextOccurrence(currentOccurrence, expense.recurrence)
+    }
+
+    // Add all occurrences within the current month
+    while (currentOccurrence <= monthEnd && occurrenceCount <= numberOfOccurrences) {
+      plannedExpenses.push({
+        ...expense,
+        scheduledDate: currentOccurrence.toISOString(),
+        occurrence: occurrenceCount,
+      })
+
+      currentOccurrence = getNextOccurrence(currentOccurrence, expense.recurrence)
+      occurrenceCount++
+    }
+  })
+
+  // Sort by scheduled date
+  return plannedExpenses.sort(
+    (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime(),
+  )
+})
+
 const loadData = async () => {
   const loadBucketsPromise = loadBuckets()
   const loadExpensesPromise = loadExpenses()
   const loadIncomesPromise = loadIncomes()
-  await Promise.all([loadBucketsPromise, loadExpensesPromise, loadIncomesPromise])
+  const loadRecurringExpensesPromise = loadRecurringExpenses()
+  await Promise.all([
+    loadBucketsPromise,
+    loadExpensesPromise,
+    loadIncomesPromise,
+    loadRecurringExpensesPromise,
+  ])
 }
 
 const loadIncomes = async () => {
@@ -367,6 +541,16 @@ const loadExpenses = async () => {
     new Date(),
   )
   currentMonthExpenses.value = expenses
+}
+
+const loadRecurringExpenses = async () => {
+  if (!householdStore.currentHousehold) {
+    return
+  }
+  const expenses = await recurringExpenseApi.getRecurringExpenses(
+    householdStore.currentHousehold.householdId,
+  )
+  recurringExpenses.value = expenses
 }
 
 const onAddExpenseClick = () => {

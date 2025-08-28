@@ -8,11 +8,14 @@
         BUILD_CONFIGURATION: "Debug"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/yourapp.pfx
-      ASPNETCORE_Kestrel__Certificates__Default__Password: yourpassword
       ASPNETCORE_URLS: https://+:8081;http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: 1
+      DOTNET_RUNNING_IN_CONTAINER: true
+      DOTNET_CORE_DEBUG: 1
+      DOTNET_HOST_PATH: /root/.dotnet/tools
     volumes:
-      - ${APPDATA}/ASP.NET/Https:/https:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
     ports:
       - "8080:8080"
       - "8081:8081"

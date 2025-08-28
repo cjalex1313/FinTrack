@@ -18,23 +18,81 @@
           <span>Monthly Budget</span>
         </div>
 
-        <!-- Utilization Progress Bar - Only show if utilizationPercentage is provided -->
+        <!-- Combined Utilization Progress Bar -->
         <div
-          v-if="utilizationPercentage !== undefined && utilizationPercentage !== null"
+          v-if="
+            (utilizationPercentage !== undefined && utilizationPercentage !== null) ||
+            (plannedUtilizationPercentage !== undefined && plannedUtilizationPercentage !== null)
+          "
           class="mt-3"
         >
           <div class="flex justify-between items-center mb-1">
-            <span class="text-xs font-medium text-gray-600">Budget Used</span>
-            <span class="text-xs font-medium" :class="getUtilizationColorClass()">
-              {{ utilizationPercentage.toFixed(1) }}%
-            </span>
+            <span class="text-xs font-medium text-gray-600">Budget Utilization</span>
+            <div class="flex gap-2 text-xs font-medium">
+              <span
+                v-if="utilizationPercentage !== undefined && utilizationPercentage !== null"
+                :class="getUtilizationColorClass(utilizationPercentage)"
+              >
+                Actual: {{ utilizationPercentage.toFixed(1) }}%
+              </span>
+              <span
+                v-if="
+                  plannedUtilizationPercentage !== undefined &&
+                  plannedUtilizationPercentage !== null
+                "
+                :class="getUtilizationColorClass(plannedUtilizationPercentage)"
+                class="opacity-80"
+              >
+                Planned: {{ plannedUtilizationPercentage.toFixed(1) }}%
+              </span>
+            </div>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
+
+          <!-- Combined Progress Bar -->
+          <div class="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
+            <!-- Planned (background layer) -->
             <div
-              class="h-2 rounded-full transition-all duration-300"
-              :class="getUtilizationBarColorClass()"
+              v-if="
+                plannedUtilizationPercentage !== undefined && plannedUtilizationPercentage !== null
+              "
+              class="absolute top-0 left-0 h-full rounded-full transition-all duration-300 opacity-40"
+              :class="getUtilizationBarColorClass(plannedUtilizationPercentage)"
+              :style="{ width: `${Math.min(plannedUtilizationPercentage, 100)}%` }"
+            ></div>
+
+            <!-- Actual (foreground layer) -->
+            <div
+              v-if="utilizationPercentage !== undefined && utilizationPercentage !== null"
+              class="absolute top-0 left-0 h-full rounded-full transition-all duration-300"
+              :class="getUtilizationBarColorClass(utilizationPercentage)"
               :style="{ width: `${Math.min(utilizationPercentage, 100)}%` }"
             ></div>
+          </div>
+
+          <!-- Legend -->
+          <div class="flex gap-4 mt-1 text-xs text-gray-500">
+            <div
+              v-if="utilizationPercentage !== undefined && utilizationPercentage !== null"
+              class="flex items-center gap-1"
+            >
+              <div
+                class="w-2 h-2 rounded-full"
+                :class="getUtilizationBarColorClass(utilizationPercentage)"
+              ></div>
+              <span>Actual</span>
+            </div>
+            <div
+              v-if="
+                plannedUtilizationPercentage !== undefined && plannedUtilizationPercentage !== null
+              "
+              class="flex items-center gap-1"
+            >
+              <div
+                class="w-2 h-2 rounded-full opacity-40"
+                :class="getUtilizationBarColorClass(plannedUtilizationPercentage)"
+              ></div>
+              <span>Planned</span>
+            </div>
           </div>
         </div>
       </div>
@@ -77,6 +135,7 @@ import { Button } from 'primevue'
 interface Props {
   bucket: ExpenseBucketDTO
   utilizationPercentage?: number | null
+  plannedUtilizationPercentage?: number | null
   showActionButtons?: boolean
 }
 
@@ -88,8 +147,7 @@ const emit = defineEmits<{
 }>()
 
 // Helper function to get the appropriate color class for utilization percentage text
-const getUtilizationColorClass = () => {
-  const percentage = props.utilizationPercentage || 0
+const getUtilizationColorClass = (percentage: number) => {
   if (percentage >= 90) return 'text-red-600'
   if (percentage >= 75) return 'text-orange-600'
   if (percentage >= 50) return 'text-yellow-600'
@@ -97,8 +155,7 @@ const getUtilizationColorClass = () => {
 }
 
 // Helper function to get the appropriate color class for utilization progress bar
-const getUtilizationBarColorClass = () => {
-  const percentage = props.utilizationPercentage || 0
+const getUtilizationBarColorClass = (percentage: number) => {
   if (percentage >= 90) return 'bg-red-500'
   if (percentage >= 75) return 'bg-orange-500'
   if (percentage >= 50) return 'bg-yellow-500'
