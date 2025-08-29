@@ -10,6 +10,18 @@
   >
     <div class="w-full md:w-96">
       <div class="space-y-4">
+        <!-- Description Field -->
+        <div class="field">
+          <label for="description" class="block text-sm font-medium mb-2">Description</label>
+          <Textarea
+            id="description"
+            v-model="formData.description"
+            rows="3"
+            class="w-full resize-none"
+            placeholder="Enter description (optional)"
+          />
+        </div>
+
         <!-- Amount Field -->
         <div class="field">
           <label for="amount" class="block text-sm font-medium mb-2">Amount *</label>
@@ -20,7 +32,6 @@
             :max-fraction-digits="2"
             mode="currency"
             currency="USD"
-            locale="en-US"
             class="w-full"
             :class="{ 'p-invalid': errors.amount }"
             placeholder="Enter amount"
@@ -54,18 +65,6 @@
             placeholder="Select expense bucket (optional)"
             class="w-full"
             show-clear
-          />
-        </div>
-
-        <!-- Description Field -->
-        <div class="field">
-          <label for="description" class="block text-sm font-medium mb-2">Description</label>
-          <Textarea
-            id="description"
-            v-model="formData.description"
-            rows="3"
-            class="w-full resize-none"
-            placeholder="Enter description (optional)"
           />
         </div>
 

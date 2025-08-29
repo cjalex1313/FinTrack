@@ -19,7 +19,7 @@ public class AuthController : BaseController
     public AuthController(
         IAuthService authService,
         IOptions<IdentityOptions> identityOptions,
-        GoogleJwtValidator? googleValidator
+        GoogleJwtValidator? googleValidator = null
     )
     {
         _authService = authService;
