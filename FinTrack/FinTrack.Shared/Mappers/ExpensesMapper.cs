@@ -25,7 +25,9 @@ public static class ExpensesMapper
             Amount = expense.Amount,
             Date = expense.Date,
             Description = expense.Description,
-            ExpenseBucketId = expense.ExpenseBucketId
+            ExpenseBucketId = expense.ExpenseBucketId,
+            HouseholdId = expense.HouseholdId,
+            RecurringExpenseId = expense.RecurringExpenseId
         };       
     }
 

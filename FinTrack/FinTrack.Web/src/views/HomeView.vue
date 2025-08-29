@@ -51,9 +51,7 @@
       <section class="mt-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Income Section -->
-          <div
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[600px] overflow-y-auto"
-          >
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 class="text-xl font-semibold text-slate-800 mb-4">Incomes</h2>
             <Skeleton v-if="oneTimeIncomes == null" height="100px" width="100%" />
             <div v-else>
@@ -86,10 +84,19 @@
           </div>
 
           <!-- Expense Buckets Section -->
-          <div
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[600px] overflow-y-auto"
-          >
-            <h2 class="text-xl font-semibold text-slate-800 mb-4">Expense Buckets</h2>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold text-slate-800">Expense Buckets</h2>
+              <Button
+                v-if="calculatedBuckets && calculatedBuckets.length > 3 && !showAllBuckets"
+                @click="showAllBuckets = true"
+                size="small"
+                severity="secondary"
+                text
+              >
+                Show All ({{ calculatedBuckets.length }})
+              </Button>
+            </div>
             <Skeleton v-if="calculatedBuckets === null" height="100px" width="100%" />
             <div v-else>
               <div
@@ -116,7 +123,7 @@
               </div>
               <div v-else>
                 <ExpenseBucketCard
-                  v-for="bucket in calculatedBuckets"
+                  v-for="bucket in displayedBuckets"
                   :key="bucket.id"
                   :bucket="bucket"
                   :utilization-percentage="bucket.utilizationPercentage"
@@ -130,9 +137,7 @@
 
       <!-- Expense Log Section -->
       <section class="mt-8">
-        <div
-          class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[600px] overflow-y-auto"
-        >
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 class="text-xl font-semibold text-slate-800 mb-4">Expense Log</h2>
           <Skeleton v-if="currentMonthExpenses == null" height="100px" width="100%" />
           <div v-else>
@@ -246,13 +251,11 @@ import getMonthlyEquivalent from '@/helpers/getMonthlyEquivalent'
 import calculateRecurringExpenseForMonth, {
   getNextOccurrence,
 } from '@/helpers/calculateRecurringExpenseForMonth'
-import { RecurrenceType } from '@/models/recurrenceType'
 import OneTimeIncomeCard from '@/components/income/OneTimeIncomeCard.vue'
 import RecurringIncomeCard from '@/components/income/RecurringIncomeCard.vue'
 import ExpenseBucketCard from '@/components/expense/ExpenseBucketCard.vue'
 import ExpenseCard from '@/components/expense/ExpenseCard.vue'
 import PlannedExpenseCard from '@/components/expense/PlannedExpenseCard.vue'
-import RecurringExpenseCard from '@/components/expense/recurring/RecurringExpenseCard.vue'
 import { useHouseholdStore } from '@/stores/household'
 import { useRecurringExpenseApi } from '@/api/recurringExpenseApi'
 
@@ -262,6 +265,7 @@ const oneTimeIncomes = ref<OneTimeIncomeDTO[] | null>(null)
 const recurringIncomes = ref<RecurringIncomeDTO[] | null>(null)
 const recurringExpenses = ref<RecurringExpenseDTO[] | null>(null)
 const showExpenseDialog = ref(false)
+const showAllBuckets = ref(false)
 
 const expenseApi = useExpenseApi()
 const incomeApi = useIncomeApi()
@@ -366,6 +370,27 @@ const calculatedBuckets = computed(() => {
   }
 
   return result
+})
+
+const displayedBuckets = computed(() => {
+  if (!calculatedBuckets.value) {
+    return []
+  }
+
+  // Sort buckets by utilization percentage (highest first)
+  // If utilization is null, treat as 0 for sorting
+  const sortedBuckets = [...calculatedBuckets.value].sort((a, b) => {
+    const aUtilization = a.utilizationPercentage ?? 0
+    const bUtilization = b.utilizationPercentage ?? 0
+    return bUtilization - aUtilization
+  })
+
+  // If showAllBuckets is false and there are more than 3 buckets, show only top 3
+  if (!showAllBuckets.value && sortedBuckets.length > 3) {
+    return sortedBuckets.slice(0, 3)
+  }
+
+  return sortedBuckets
 })
 
 const loadHouseholds = () => {
@@ -540,6 +565,9 @@ const loadExpenses = async () => {
     householdStore.currentHousehold.householdId,
     new Date(),
   )
+  if (expenses.length > 0) {
+    expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }
   currentMonthExpenses.value = expenses
 }
 
@@ -569,6 +597,9 @@ const saveExpense = async (expense: ExpenseDTO) => {
     ) {
       if (currentMonthExpenses.value != null) {
         currentMonthExpenses.value.push(savedExpense)
+        currentMonthExpenses.value.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        )
       }
     }
   } finally {
@@ -580,6 +611,7 @@ watch(
   () => householdStore.currentHousehold,
   (newHousehold) => {
     if (newHousehold) {
+      showAllBuckets.value = false // Reset show all buckets when switching households
       loadData()
     }
   },

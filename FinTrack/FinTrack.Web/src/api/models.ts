@@ -56,6 +56,7 @@ export interface ExpenseDTO {
   id: string
   householdId: string
   expenseBucketId: string | null
+  recurringExpenseId: string | null
   amount: number
   date: string
   description: string | null

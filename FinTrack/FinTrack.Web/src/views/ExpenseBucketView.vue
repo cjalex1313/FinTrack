@@ -21,9 +21,7 @@
       </header>
 
       <!-- Expense Buckets Section -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-h-[700px] overflow-y-auto"
-      >
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold text-slate-800 mb-4">Expense Buckets</h2>
         <Skeleton v-if="expenseBuckets == null" height="100px" width="100%" />
         <div v-else>

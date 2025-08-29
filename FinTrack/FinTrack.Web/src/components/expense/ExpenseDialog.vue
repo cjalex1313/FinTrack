@@ -195,6 +195,7 @@ const trySave = async () => {
       amount: formData.value.amount!,
       date: format(formData.value.date, 'yyyy-MM-dd'),
       description: formData.value.description,
+      recurringExpenseId: null,
     }
 
     emit('save', expenseDTO)
