@@ -51,7 +51,7 @@ jobs:
 
       - name: Run Web unit tests
         working-directory: FinTrack/FinTrack.Web
-        run: npm run test:unit -- --reporter=json --outputFile=web-test-results.json || true
+        run: npm run test:unit -- --reporter=json --outputFile=web-test-results.json
 
       - name: Upload Web test results
         if: always()
