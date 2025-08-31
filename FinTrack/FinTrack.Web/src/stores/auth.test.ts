@@ -261,6 +261,7 @@ describe('Auth Store', () => {
       await authStore.signOut()
 
       expect(authStore.authData.profile).toBeNull()
+      expect(false).toBe(true)
     })
   })
 
