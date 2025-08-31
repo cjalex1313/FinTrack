@@ -18,9 +18,9 @@ export default function calculateRecurringExpenseForMonth(
   const targetYear = targetMonth.getFullYear()
   const targetMonthNum = targetMonth.getMonth()
 
-  // Get the first and last day of the target month
-  const monthStart = new Date(targetYear, targetMonthNum, 1)
-  const monthEnd = new Date(targetYear, targetMonthNum + 1, 0)
+  // Get the first and last day of the target month in UTC to match the input date timezone
+  const monthStart = new Date(Date.UTC(targetYear, targetMonthNum, 1))
+  const monthEnd = new Date(Date.UTC(targetYear, targetMonthNum + 1, 0, 23, 59, 59, 999))
 
   let totalAmount = 0
   let currentDate = new Date(nextDateObj)

@@ -5,6 +5,11 @@ on:
     branches:
       - "**"
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -27,7 +32,8 @@ jobs:
 
       - name: Run .NET unit tests
         working-directory: FinTrack
-        run: dotnet test FinTrack.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test FinTrack.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --logger "console;verbosity=detailed"
+        continue-on-error: true
 
       - name: Upload .NET test results
         if: always()
@@ -35,6 +41,15 @@ jobs:
         with:
           name: dotnet-test-results
           path: "**/TestResults/*.trx"
+
+      - name: Publish .NET Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: .NET Tests
+          path: "**/TestResults/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,11 +66,22 @@ jobs:
 
       - name: Run Web unit tests
         working-directory: FinTrack/FinTrack.Web
-        run: npm run test:unit -- --reporter=json --outputFile=web-test-results.json || true
+        run: |
+          npm run test:unit -- --reporter=verbose --reporter=junit --outputFile=web-test-results.xml --reporter=github-actions
+        continue-on-error: true
 
       - name: Upload Web test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: web-test-results
-          path: FinTrack/FinTrack.Web/web-test-results.json
+          path: FinTrack/FinTrack.Web/web-test-results.xml
+
+      - name: Publish Web Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Vue/Vitest Tests
+          path: FinTrack/FinTrack.Web/web-test-results.xml
+          reporter: java-junit
+          fail-on-error: true
