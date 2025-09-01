@@ -132,6 +132,10 @@ public class AuthController : BaseController
         {
             return BadRequest("Invalid token");
         }
+        if (string.IsNullOrEmpty(payload.Email) || string.IsNullOrEmpty(payload.Subject))
+        {
+            return BadRequest("Email or subject is missing in the token");
+        }
         var linkedToProvider = false;
         var user = await _authService.GetUserByEmail(payload.Email);
         if (user == null)

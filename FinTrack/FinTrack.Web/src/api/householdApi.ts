@@ -37,11 +37,11 @@ export function useHouseholdApi() {
   }
 
   const inviteMember = async (householdId: string, email: string) => {
-    await baseApi.post(`api/household/invite`, { householdId, email })
+    await baseApi.post(`api/household/${householdId}/invite`, { email })
   }
 
   const removeHouseholdMember = async (householdId: string, email: string) => {
-    await baseApi.delete(`api/household/member`, { data: { householdId, email } })
+    await baseApi.delete(`api/household/${householdId}/member`, { data: { email } })
   }
 
   const rejectHouseholdInvite = async (householdId: string) => {

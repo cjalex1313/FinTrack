@@ -44,7 +44,7 @@ namespace FinTrack.BusinessLogic.Services.Auth
                 password.Append(allChars[random.Next(allChars.Length)]);
 
             // Shuffle the result to avoid predictable positions
-            return new string(password.ToString().OrderBy(_ => random.Next()).ToArray());
+            return new string([.. password.ToString().OrderBy(_ => random.Next())]);
         }
     }
 }
